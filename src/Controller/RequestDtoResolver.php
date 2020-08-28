@@ -36,7 +36,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
 
     public function supports(Request $request, ArgumentMetadata $argument): bool
     {
-        if (!is_string($argument->getType()) || '' === $argument->getType()) {
+        if (!is_string($argument->getType()) || '' === $argument->getType() || !class_exists($argument->getType())) {
             return false;
         }
 
@@ -48,7 +48,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
     public function resolve(Request $request, ArgumentMetadata $argument): Generator
     {
         $class = $argument->getType();
-        if (!is_string($class) || '' === $class) {
+        if (!is_string($class) || '' === $class || !class_exists($class)) {
             throw new \LogicException('The argument type should be a class which implements .'.RequestDto::class.' interface! This should have been already check in the supports function!');
         }
 

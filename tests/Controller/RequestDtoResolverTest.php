@@ -1,6 +1,6 @@
 <?php
 
-namespace Fusonic\Component\HttpKernelExtensions\Tests\Controller;
+namespace Fusonic\HttpKernelExtensions\Tests\Controller;
 
 use Fusonic\HttpKernelExtensions\Controller\RequestDtoResolver;
 use Fusonic\HttpKernelExtensions\Tests\Dto\NotADto;
@@ -34,6 +34,15 @@ class RequestDtoResolverTest extends TestCase
     {
         $request = new Request([], [], ['_route_params' => ['id' => 5]]);
         $argument = new ArgumentMetadata('routeParameterDto', NotADto::class, false, false, null);
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
+        self::assertFalse($resolver->supports($request, $argument));
+    }
+
+    public function testSupportOfNotExistingClass(): void
+    {
+        $request = new Request([], [], ['_route_params' => ['id' => 5]]);
+        $argument = new ArgumentMetadata('NotExistingClass', 'My\Wonderfully\Namespaced\NotExistingClass.php', false, false, null);
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         self::assertFalse($resolver->supports($request, $argument));
