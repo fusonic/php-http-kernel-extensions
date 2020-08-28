@@ -3,6 +3,7 @@
 namespace Fusonic\HttpKernelExtensions\Tests\Controller;
 
 use Fusonic\HttpKernelExtensions\Controller\RequestDtoResolver;
+use Fusonic\HttpKernelExtensions\Tests\Dto\EmptyDto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\NotADto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\RouteParameterDto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\TestDto;
@@ -42,7 +43,13 @@ class RequestDtoResolverTest extends TestCase
     public function testSupportOfNotExistingClass(): void
     {
         $request = new Request([], [], ['_route_params' => ['id' => 5]]);
-        $argument = new ArgumentMetadata('NotExistingClass', 'My\Wonderfully\Namespaced\NotExistingClass.php', false, false, null);
+        $argument = new ArgumentMetadata(
+            'NotExistingClass',
+            'My\Wonderfully\Namespaced\NotExistingClass.php',
+            false,
+            false,
+            null
+        );
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         self::assertFalse($resolver->supports($request, $argument));
@@ -167,24 +174,6 @@ class RequestDtoResolverTest extends TestCase
         $generator->current();
     }
 
-    public function testInvalidTypeMappingHandling(): void
-    {
-        $this->expectException(BadRequestHttpException::class);
-        $data = [
-            'int' => 5,
-            'float' => 'foobar',
-            'string' => 'foobar',
-            'bool' => true,
-        ];
-        $request = new Request([], [], [], [], [], [], json_encode($data).'foobar');
-        $request->setMethod(Request::METHOD_POST);
-        $argument = new ArgumentMetadata('dto', TestDto::class, false, false, null);
-
-        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
-        $generator = $resolver->resolve($request, $argument);
-        $generator->current();
-    }
-
     public function testQueryParameterHandling(): void
     {
         $query = [
@@ -209,9 +198,27 @@ class RequestDtoResolverTest extends TestCase
         self::assertEquals(true, $dto->isBool());
     }
 
-    public function testRouteParameterHandlingWithNotMatchingTypes(): void
+    public function testInvalidQueryParameterHandling(): void
     {
         $this->expectException(BadRequestHttpException::class);
+        $query = [
+            'int' => [
+                'subentity' => [1, 2, 3, 4],
+            ],
+        ];
+        $request = new Request($query);
+        $request->setMethod(Request::METHOD_GET);
+        $argument = new ArgumentMetadata('dto', TestDto::class, false, false, null);
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
+        $generator = $resolver->resolve($request, $argument);
+
+        /** @var TestDto $dto */
+        $dto = $generator->current();
+    }
+
+    public function testRouteParameterHandlingWithNotMatchingTypes(): void
+    {
         $attributes = [
             '_route_params' => [
                 'int' => 5,
@@ -226,7 +233,13 @@ class RequestDtoResolverTest extends TestCase
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
 
-        $generator->current();
+        /** @var RouteParameterDto $dto */
+        $dto = $generator->current();
+        self::assertInstanceOf(RouteParameterDto::class, $dto);
+        self::assertEquals(5, $dto->getInt());
+        self::assertEquals(9.99, $dto->getFloat());
+        self::assertEquals('foobar', $dto->getString());
+        self::assertEquals(true, $dto->isBool());
     }
 
     public function testRouteParameterHandlingWithStrings(): void
@@ -246,7 +259,7 @@ class RequestDtoResolverTest extends TestCase
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
 
-        /** @var TestDto $dto */
+        /** @var RouteParameterDto $dto */
         $dto = $generator->current();
         self::assertInstanceOf(RouteParameterDto::class, $dto);
         self::assertEquals(5, $dto->getInt());
@@ -255,11 +268,11 @@ class RequestDtoResolverTest extends TestCase
         self::assertEquals(true, $dto->isBool());
     }
 
-    public function testInvalidRequestHandling(): void
+    public function testInvalidTypeMappingHandling(): void
     {
         $this->expectException(BadRequestHttpException::class);
         $this->expectExceptionMessage(
-            'Failed to denormalize attribute "float" value for class "Fusonic\HttpKernelExtensions\Tests\Dto\TestDto": Expected argument of type "float", "string" given at property path "float".'
+            'The type of the "float" attribute for class "Fusonic\HttpKernelExtensions\Tests\Dto\TestDto" must be one of "float" ("string" given).'
         );
         /** @var string $data */
         $data = json_encode(
@@ -280,6 +293,20 @@ class RequestDtoResolverTest extends TestCase
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
         $generator->current();
+    }
+
+    public function testEmptyBodyHandling(): void
+    {
+        $request = new Request();
+        $request->setMethod(Request::METHOD_POST);
+        $argument = new ArgumentMetadata('dto', EmptyDto::class, false, false, null);
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
+        $generator = $resolver->resolve($request, $argument);
+
+        /** @var EmptyDto $dto */
+        $dto = $generator->current();
+        self::assertInstanceOf(EmptyDto::class, $dto);
     }
 
     private function getDenormalizer(): DenormalizerInterface

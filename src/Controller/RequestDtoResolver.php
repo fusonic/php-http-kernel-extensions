@@ -55,11 +55,11 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         $routeParameters = $this->getRouteParams($request);
 
         if (in_array($request->getMethod(), self::METHODS_WITH_STRICT_TYPE_CHECKS, true)) {
-            $options = [AbstractObjectNormalizer::DISABLE_TYPE_ENFORCEMENT => true];
+            $options = [];
             $content = $this->getRequestContent($request);
             $data = array_merge($content, $routeParameters);
         } else {
-            $options = [];
+            $options = [AbstractObjectNormalizer::DISABLE_TYPE_ENFORCEMENT => true];
             $queries = $this->getRequestQueries($request);
             $data = array_merge($queries, $routeParameters);
         }

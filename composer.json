@@ -1,6 +1,6 @@
 {
     "name": "fusonic/http-kernel-extensions",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "Symfony HttpKernel Component Extensions.",
     "type": "library",
     "authors": [
