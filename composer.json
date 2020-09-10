@@ -1,6 +1,6 @@
 {
     "name": "fusonic/http-kernel-extensions",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "Symfony HttpKernel Component Extensions.",
     "type": "library",
     "authors": [
@@ -20,17 +20,17 @@
         }
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.0",
-        "phpstan/phpstan": "^0.12.33",
+        "phpunit/phpunit": "^9.3",
+        "phpstan/phpstan": "^0.12.42",
         "friendsofphp/php-cs-fixer": "^2.16"
     },
     "require": {
         "php": ">=7.4",
-        "symfony/http-kernel": "^4.4",
-        "symfony/serializer": "^4.4",
-        "symfony/validator": "^4.4",
-        "symfony/property-info": "^4.4",
-        "symfony/property-access": "^4.4",
+        "symfony/http-kernel": "^4.4 || ^5.1",
+        "symfony/serializer": "^4.4 || ^5.1",
+        "symfony/validator": "^4.4 || ^5.1",
+        "symfony/property-info": "^4.4 || ^5.1",
+        "symfony/property-access": "^4.4 || ^5.1",
         "doctrine/cache": "^1.10",
         "doctrine/annotations": "^1.10"
     },
