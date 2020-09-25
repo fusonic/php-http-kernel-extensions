@@ -174,6 +174,35 @@ class RequestDtoResolverTest extends TestCase
         $generator->current();
     }
 
+    public function testDuplicateKeyHandling(): void
+    {
+        $this->expectException(BadRequestHttpException::class);
+        $query = [
+            'int' => 5,
+            'float' => 9.99,
+            'string' => 'foobar',
+            'bool' => true,
+        ];
+        $attributes = [
+            '_route_params' => [
+                'int' => 5,
+                'float' => 9.99,
+                'string' => 'foobar',
+                'bool' => true,
+            ],
+        ];
+
+        $request = new Request($query, [], $attributes);
+        $request->setMethod(Request::METHOD_GET);
+        $argument = new ArgumentMetadata('dto', TestDto::class, false, false, null);
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
+        $generator = $resolver->resolve($request, $argument);
+
+        /** @var TestDto $dto */
+        $dto = $generator->current();
+    }
+
     public function testQueryParameterHandling(): void
     {
         $query = [

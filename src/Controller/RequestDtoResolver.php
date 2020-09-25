@@ -56,12 +56,10 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
 
         if (in_array($request->getMethod(), self::METHODS_WITH_STRICT_TYPE_CHECKS, true)) {
             $options = [];
-            $content = $this->getRequestContent($request);
-            $data = array_merge($content, $routeParameters);
+            $data = $this->mergeRequestData($this->getRequestContent($request), $routeParameters);
         } else {
             $options = [AbstractObjectNormalizer::DISABLE_TYPE_ENFORCEMENT => true];
-            $queries = $this->getRequestQueries($request);
-            $data = array_merge($queries, $routeParameters);
+            $data = $this->mergeRequestData($this->getRequestQueries($request), $routeParameters);
         }
 
         $dto = $this->denormalize($data, $class, $options);
@@ -134,5 +132,14 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
 
             throw new BadRequestHttpException('The request payload is invalid!'.PHP_EOL.$details);
         }
+    }
+
+    private function mergeRequestData(array $data, array $routeParameters): array
+    {
+        if (count($keys = array_intersect_key($data, $routeParameters)) > 0) {
+            throw new BadRequestHttpException(sprintf('Parameters (%s) used as route attributes can not be used in the request body or query parameters.', implode(', ', array_keys($keys))));
+        }
+
+        return array_merge($data, $routeParameters);
     }
 }
