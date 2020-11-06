@@ -1,5 +1,6 @@
 {
     "name": "fusonic/http-kernel-extensions",
+    "license": "MIT",
     "version": "1.0.5",
     "description": "Symfony HttpKernel Component Extensions.",
     "type": "library",
