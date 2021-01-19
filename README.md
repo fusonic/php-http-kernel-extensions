@@ -6,8 +6,6 @@
 [![php 7.4+](https://img.shields.io/badge/php-min%207.4-blue.svg)](https://gitlab.com/fusonic/devops/php/extensions/-/blob/12-open-source-preparations/packages/http-kernel-extensions/composer.json)
 
 * [About](#about)
-  * [Github](#github)
-  * [Gitlab](#gitlab) 
 * [Install](#install)
 * [Usage](#usage)
 
