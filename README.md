@@ -1,0 +1,142 @@
+# http-kernel-extensions
+
+[![License](https://img.shields.io/packagist/l/fusonic/http-kernel-extensions?color=blue)](https://github.com/fusonic/http-kernel-extensions/blob/master/LICENSE)
+[![Latest Version](https://img.shields.io/github/tag/fusonic/http-kernel-extensions.svg?color=blue)](https://github.com/fusonic/http-kernel-extensions/releases)
+[![Total Downloads](https://img.shields.io/packagist/dt/fusonic/http-kernel-extensions.svg?color=blue)](https://packagist.org/packages/fusonic/http-kernel-extensions)
+[![php 7.4+](https://img.shields.io/badge/php-min%207.4-blue.svg)](https://gitlab.com/fusonic/devops/php/extensions/-/blob/12-open-source-preparations/packages/http-kernel-extensions/composer.json)
+
+* [About](#about)
+  * [Github](#github)
+  * [Gitlab](#gitlab) 
+* [Install](#install)
+* [Usage](#usage)
+
+## About
+
+This library contains a variety of extensions to the [Symfony HttpKernel component](https://symfony.com/doc/current/components/http_kernel.html). See below for details on each extension this lib provides and how it works.
+
+Currently primary development takes place at a private repository at Gitlab.com. The project on Github.com is updated regularly, but does not include any issues managed at Gitlab. However, we are happily accepting issues and pull requests on Github as well! Feel free to open an issue or merge request. If we see broader community engagement in the future, we may consider switching our primary development to Github.
+
+## Install
+
+Use composer to install the lib from packagist.
+
+```bash
+composer require fusonic/http-kernel-extensions
+```
+
+## Usage
+
+### The RequestDtoResolver
+
+In Symfony there exists a thing called [argument resolvers](https://symfony.com/doc/current/controller/argument_value_resolver.html). They can be used to set the value of controller action arguments before the actions get called. There exists e.g. the `RequestValueResolver` which will inject the current request as an argument in the called  action. Similar to this we created our own argument resolver, but it does a few more things than just injecting an object.
+
+#### What does it do?
+Our `RequestDtoResolver` can be used to map requests data directly to objects. Instead of manually getting all the
+ information from your request and putting it in an object or - god forbid - passing around generic data arrays, this
+  class will leverage the Symfony Serializer to map requests to objects and by that enable you to have custom objects
+   to transport the request data (aka data transfer objects) from your controller to your business logic. In
+    addition it will also validate the resulting object with Symfony Validation if you set validation annotations. 
+
+- Mapping will only happen for classes which implement the `Fusonic\HttpKernelExtensions\Dto\RequestDto` [interface](src/Dto/RequestDto.php). 
+  If it's not implemented it will just be skipped. It is only a marker interface and will not force you to implement
+ anything. With PHP 8 and native attributes we are probably going to add an attribute to accomplish the same thing.
+- Strong type checks will be enforced for PUT, POST, PATCH and DELETE during serialization and it will result in an
+ error if the types in the request body don't match the expected ones in the dto.
+- Type enforcement will be disabled for all other requests e.g. GET as query parameters will always be transferred as
+ string.
+- The request body will be combined with route parameters for PUT, POST, PATCH and DELETE requests (query parameters
+ will be ignored in this case).
+- The query parameters will be combined with route parameters for all other requests (request body will be ignored in
+ this case).
+ - Route parameters will always override query parameters or request body values with the same name.
+ - After deserializing the request to an object, validation will take place.
+ - A `BadRequestHttpException` will be thrown when the request or rather the resulting object is invalid according to
+  the Symfony Validation, the request body can't be deserialized, it contains invalid JSON or the hierarchy levels 
+   of the request body of exceed 512.
+
+### How to use?
+
+Supposing you are using a full Symfony setup you have to register the resolver as a service in your `services.yaml` as
+ shown below to be called by Symfony.
+
+```yaml
+    Fusonic\HttpKernelExtensions\Controller\RequestDtoResolver:
+        tags:
+            - { name: controller.argument_value_resolver, priority: 50 }
+```
+
+Create your dto like e.g. our `UpdateFooDto` here. All the validation stuff is optional but getters and setters are
+ needed by the serializer.
+
+```php
+
+// ...
+
+final class UpdateFooDto implements RequestDto
+{
+    /**
+     * @Assert\NotNull(message="Id should not be null.")
+     * @Assert\Positive(message="Id should be a positive integer.")
+     */
+    private int $id;
+
+    /**
+     * @Assert\NotBlank(message="Client version should not be be blank.")
+     */
+    private string $clientVersion;
+
+    /**
+     * @Assert\NotNull(message="Browser info should not be null.")
+     */
+    private array $browserInfo;
+
+    public function getClientVersion(): string
+    {
+        return $this->clientVersion;
+    }
+
+    public function setClientVersion(string $clientVersion): void
+    {
+        $this->clientVersion = $clientVersion;
+    }
+
+    public function getBrowserInfo(): array
+    {
+        return $this->browserInfo;
+    }
+
+    public function setBrowserInfo(array $browserInfo): void
+    {
+        $this->browserInfo = $browserInfo;
+    }
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function setId(int $id): void
+    {
+        $this->id = $id;
+    }
+}
+```
+
+And finally add the dto to your controller action. Routing parameters are optional as well of course.
+
+```php
+
+// ...
+
+final class FooController extends AbstractController
+{
+    /**
+     * @Route("/{id}/update", methods={"POST"}, requirements={"id"="\d+"})
+     */
+    public function updateAction(UpdateFooDto $dto): Response
+    {
+        // do something with your $dto here
+    }
+}
+```

@@ -34,13 +34,23 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class RequestDtoResolverTest extends TestCase
 {
-    public function testSupportInvalidClass(): void
+    public function testSupportOfNotSupportedClass(): void
     {
-        $request = new Request([], [], ['_route_params' => ['id' => 5]]);
+        $request = new Request([], [], ['_route_params' => ['id' => 15]]);
         $argument = new ArgumentMetadata('routeParameterDto', NotADto::class, false, false, null);
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         self::assertFalse($resolver->supports($request, $argument));
+    }
+
+    public function testResolveOfNotSupportedClass(): void
+    {
+        $this->expectException(\LogicException::class);
+        $request = new Request([], [], ['_route_params' => ['id' => 5]]);
+        $argument = new ArgumentMetadata('routeParameterDto', NotADto::class, false, false, null);
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
+        $resolver->resolve($request, $argument)->current();
     }
 
     public function testSupportOfNotExistingClass(): void
@@ -97,6 +107,7 @@ class RequestDtoResolverTest extends TestCase
 
         /** @var TestDto $dto */
         $dto = $iterable->current();
+        self::assertInstanceOf(TestDto::class, get_class($dto));
     }
 
     public function testStrictTypeMappingForPostRequestBody(): void

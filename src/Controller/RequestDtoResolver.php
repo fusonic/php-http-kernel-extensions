@@ -39,20 +39,13 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
 
     public function supports(Request $request, ArgumentMetadata $argument): bool
     {
-        if (!is_string($argument->getType()) || '' === $argument->getType() || !class_exists($argument->getType())) {
-            return false;
-        }
-
-        $interfaces = class_implements($argument->getType());
-
-        return in_array(RequestDto::class, $interfaces, true);
+        return $this->isSupportedArgument($argument);
     }
 
     public function resolve(Request $request, ArgumentMetadata $argument): Generator
     {
-        $class = $argument->getType();
-        if (!is_string($class) || '' === $class || !class_exists($class)) {
-            throw new \LogicException('The argument type should be a class which implements .'.RequestDto::class.' interface! This should have been already check in the supports function!');
+        if (!$this->isSupportedArgument($argument)) {
+            throw new \LogicException('The argument type should be a class which implements .'.RequestDto::class.' interface! This should have been check in the supports function!');
         }
 
         $routeParameters = $this->getRouteParams($request);
@@ -65,10 +58,23 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
             $data = $this->mergeRequestData($this->getRequestQueries($request), $routeParameters);
         }
 
-        $dto = $this->denormalize($data, $class, $options);
+        /** @var string $clazz */
+        $clazz = $argument->getType();
+        $dto = $this->denormalize($data, $clazz, $options);
         $this->validate($dto);
 
         yield $dto;
+    }
+
+    private function isSupportedArgument(ArgumentMetadata $argument): bool
+    {
+        if (!is_string($argument->getType()) || '' === $argument->getType() || !class_exists($argument->getType())) {
+            return false;
+        }
+
+        $interfaces = class_implements($argument->getType());
+
+        return in_array(RequestDto::class, $interfaces, true);
     }
 
     private function getRequestContent(Request $request): array
