@@ -74,7 +74,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
 
         $interfaces = class_implements($argument->getType());
 
-        return in_array(RequestDto::class, $interfaces, true);
+        return false !== $interfaces && in_array(RequestDto::class, $interfaces, true);
     }
 
     private function getRequestContent(Request $request): array
