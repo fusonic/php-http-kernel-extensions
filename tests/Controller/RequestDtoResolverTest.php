@@ -3,15 +3,20 @@
 // Copyright (c) Fusonic GmbH. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for license information.
 
+declare(strict_types=1);
+
 namespace Fusonic\HttpKernelExtensions\Tests\Controller;
 
+use Fusonic\HttpKernelExtensions\Attribute\FromRequest;
 use Fusonic\HttpKernelExtensions\Controller\RequestDtoResolver;
+use Fusonic\HttpKernelExtensions\Tests\Dto\ClassDtoWithAttribute;
 use Fusonic\HttpKernelExtensions\Tests\Dto\EmptyDto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\NotADto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\RouteParameterDto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\TestDto;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Attribute\ArgumentInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
@@ -37,7 +42,7 @@ class RequestDtoResolverTest extends TestCase
     public function testSupportOfNotSupportedClass(): void
     {
         $request = new Request([], [], ['_route_params' => ['id' => 15]]);
-        $argument = new ArgumentMetadata('routeParameterDto', NotADto::class, false, false, null);
+        $argument = $this->createArgumentMetadata(NotADto::class);
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         self::assertFalse($resolver->supports($request, $argument));
@@ -47,7 +52,7 @@ class RequestDtoResolverTest extends TestCase
     {
         $this->expectException(\LogicException::class);
         $request = new Request([], [], ['_route_params' => ['id' => 5]]);
-        $argument = new ArgumentMetadata('routeParameterDto', NotADto::class, false, false, null);
+        $argument = $this->createArgumentMetadata(NotADto::class);
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $resolver->resolve($request, $argument)->current();
@@ -56,13 +61,7 @@ class RequestDtoResolverTest extends TestCase
     public function testSupportOfNotExistingClass(): void
     {
         $request = new Request([], [], ['_route_params' => ['id' => 5]]);
-        $argument = new ArgumentMetadata(
-            'NotExistingClass',
-            'My\Wonderfully\Namespaced\NotExistingClass.php',
-            false,
-            false,
-            null
-        );
+        $argument = $this->createArgumentMetadata('NotExistingClass', new FromRequest());
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         self::assertFalse($resolver->supports($request, $argument));
@@ -80,7 +79,16 @@ class RequestDtoResolverTest extends TestCase
     public function testSupportValidClass(): void
     {
         $request = new Request([], [], ['_route_params' => ['id' => 5]]);
-        $argument = new ArgumentMetadata('dto', TestDto::class, false, false, null);
+        $argument = $this->createArgumentMetadata(TestDto::class, new FromRequest());
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
+        self::assertTrue($resolver->supports($request, $argument));
+    }
+
+    public function testSupportValidClassAndClassAttribute(): void
+    {
+        $request = new Request([], [], ['_route_params' => ['id' => 5]]);
+        $argument = $this->createArgumentMetadata(ClassDtoWithAttribute::class, new FromRequest());
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         self::assertTrue($resolver->supports($request, $argument));
@@ -100,7 +108,7 @@ class RequestDtoResolverTest extends TestCase
 
         $request = new Request([], [], [], [], [], [], $data);
         $request->setMethod(Request::METHOD_POST);
-        $argument = new ArgumentMetadata('dto', TestDto::class, false, false, null);
+        $argument = $this->createArgumentMetadata(TestDto::class, new FromRequest());
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $iterable = $resolver->resolve($request, $argument);
@@ -127,7 +135,7 @@ class RequestDtoResolverTest extends TestCase
 
         $request = new Request([], [], [], [], [], [], $data);
         $request->setMethod(Request::METHOD_POST);
-        $argument = new ArgumentMetadata('dto', TestDto::class, false, false, null);
+        $argument = $this->createArgumentMetadata(TestDto::class, new FromRequest());
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
@@ -161,7 +169,7 @@ class RequestDtoResolverTest extends TestCase
 
         $request = new Request([], [], [], [], [], [], $data);
         $request->setMethod(Request::METHOD_GET);
-        $argument = new ArgumentMetadata('dto', TestDto::class, false, false, null);
+        $argument = $this->createArgumentMetadata(TestDto::class, new FromRequest());
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
@@ -181,7 +189,7 @@ class RequestDtoResolverTest extends TestCase
         ];
         $request = new Request([], [], [], [], [], [], json_encode($data).'foobar');
         $request->setMethod(Request::METHOD_POST);
-        $argument = new ArgumentMetadata('dto', TestDto::class, false, false, null);
+        $argument = $this->createArgumentMetadata(TestDto::class, new FromRequest());
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
@@ -208,7 +216,7 @@ class RequestDtoResolverTest extends TestCase
 
         $request = new Request($query, [], $attributes);
         $request->setMethod(Request::METHOD_GET);
-        $argument = new ArgumentMetadata('dto', TestDto::class, false, false, null);
+        $argument = $this->createArgumentMetadata(TestDto::class, new FromRequest());
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
@@ -227,7 +235,7 @@ class RequestDtoResolverTest extends TestCase
         ];
         $request = new Request($query);
         $request->setMethod(Request::METHOD_GET);
-        $argument = new ArgumentMetadata('dto', TestDto::class, false, false, null);
+        $argument = $this->createArgumentMetadata(TestDto::class, new FromRequest());
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
@@ -251,7 +259,7 @@ class RequestDtoResolverTest extends TestCase
         ];
         $request = new Request($query);
         $request->setMethod(Request::METHOD_GET);
-        $argument = new ArgumentMetadata('dto', TestDto::class, false, false, null);
+        $argument = $this->createArgumentMetadata(TestDto::class, new FromRequest());
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
@@ -271,7 +279,7 @@ class RequestDtoResolverTest extends TestCase
             ],
         ];
         $request = new Request([], [], $attributes);
-        $argument = new ArgumentMetadata('dto', RouteParameterDto::class, false, false, null);
+        $argument = $this->createArgumentMetadata(RouteParameterDto::class, new FromRequest());
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
@@ -297,7 +305,7 @@ class RequestDtoResolverTest extends TestCase
         ];
         $request = new Request([], [], $attributes);
         $request->setMethod(Request::METHOD_GET);
-        $argument = new ArgumentMetadata('dto', RouteParameterDto::class, false, false, null);
+        $argument = $this->createArgumentMetadata(RouteParameterDto::class, new FromRequest());
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
@@ -331,7 +339,7 @@ class RequestDtoResolverTest extends TestCase
         );
         $request = new Request([], [], [], [], [], [], $data);
         $request->setMethod(Request::METHOD_POST);
-        $argument = new ArgumentMetadata('dto', TestDto::class, false, false, null);
+        $argument = $this->createArgumentMetadata(TestDto::class, new FromRequest());
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
@@ -342,7 +350,7 @@ class RequestDtoResolverTest extends TestCase
     {
         $request = new Request();
         $request->setMethod(Request::METHOD_POST);
-        $argument = new ArgumentMetadata('dto', EmptyDto::class, false, false, null);
+        $argument = $this->createArgumentMetadata(EmptyDto::class, new FromRequest());
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
@@ -369,6 +377,11 @@ class RequestDtoResolverTest extends TestCase
         ];
 
         return new Serializer($normalizers, $encoders);
+    }
+
+    private function createArgumentMetadata(string $class, ArgumentInterface $argument = null): ArgumentMetadata
+    {
+        return new ArgumentMetadata('dto', $class, false, false, null, false, $argument);
     }
 
     private function getValidator(): ValidatorInterface

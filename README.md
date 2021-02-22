@@ -36,9 +36,7 @@ Our `RequestDtoResolver` can be used to map requests data directly to objects. I
    to transport the request data (aka data transfer objects) from your controller to your business logic. In
     addition it will also validate the resulting object with Symfony Validation if you set validation annotations. 
 
-- Mapping will only happen for classes which implement the `Fusonic\HttpKernelExtensions\Dto\RequestDto` [interface](src/Dto/RequestDto.php). 
-  If it's not implemented it will just be skipped. It is only a marker interface and will not force you to implement
- anything. With PHP 8 and native attributes we are probably going to add an attribute to accomplish the same thing.
+- Mapping will only happen for parameters accompanied by the `Fusonic\HttpKernelExtensions\Attribute\FromRequest` [attribute](src/Attribute/FromRequest.php).
 - Strong type checks will be enforced for PUT, POST, PATCH and DELETE during serialization and it will result in an
  error if the types in the request body don't match the expected ones in the dto.
 - Type enforcement will be disabled for all other requests e.g. GET as query parameters will always be transferred as
@@ -71,7 +69,7 @@ Create your dto like e.g. our `UpdateFooDto` here. All the validation stuff is o
 
 // ...
 
-final class UpdateFooDto implements RequestDto
+final class UpdateFooDto
 {
     /**
      * @Assert\NotNull(message="Id should not be null.")
@@ -121,7 +119,42 @@ final class UpdateFooDto implements RequestDto
 }
 ```
 
-And finally add the dto to your controller action. Routing parameters are optional as well of course.
+#### Parameter attribute
+
+Finally, add the dto with the `RequestDtoArgument` to your controller action. Routing parameters are optional as well of course.
+
+```php
+
+// ...
+use Fusonic\HttpKernelExtensions\Attribute\FromRequest;
+
+final class FooController extends AbstractController
+{
+    /**
+     * @Route("/{id}/update", methods={"POST"}, requirements={"id"="\d+"})
+     */
+    public function updateAction(#[FromRequest] UpdateFooDto $dto): Response
+    {
+        // do something with your $dto here
+    }
+}
+```
+
+#### Class attribute
+
+Alternatively you can also add the attribute to the dto class itself instead of the parameter in the controller action if you prefer it this way.
+
+```php
+
+// ...
+use Fusonic\HttpKernelExtensions\Attribute\FromRequest;
+
+#[FromRequest]
+final class UpdateFooDto
+{
+// ...
+}
+```
 
 ```php
 

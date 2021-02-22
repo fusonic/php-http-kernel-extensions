@@ -7,8 +7,10 @@ declare(strict_types=1);
 
 namespace Fusonic\HttpKernelExtensions\Controller;
 
-use Fusonic\HttpKernelExtensions\Dto\RequestDto;
+use Fusonic\HttpKernelExtensions\Attribute\FromRequest;
 use Generator;
+use ReflectionAttribute;
+use ReflectionClass;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ArgumentValueResolverInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
@@ -22,8 +24,6 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 final class RequestDtoResolver implements ArgumentValueResolverInterface
 {
     private const MAX_JSON_DEPTH = 512;
-    private DenormalizerInterface $serializer;
-    private ValidatorInterface $validator;
     private const METHODS_WITH_STRICT_TYPE_CHECKS = [
         Request::METHOD_PUT,
         Request::METHOD_POST,
@@ -31,10 +31,8 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         Request::METHOD_PATCH,
     ];
 
-    public function __construct(DenormalizerInterface $serializer, ValidatorInterface $validator)
+    public function __construct(private DenormalizerInterface $serializer, private ValidatorInterface $validator)
     {
-        $this->serializer = $serializer;
-        $this->validator = $validator;
     }
 
     public function supports(Request $request, ArgumentMetadata $argument): bool
@@ -45,7 +43,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
     public function resolve(Request $request, ArgumentMetadata $argument): Generator
     {
         if (!$this->isSupportedArgument($argument)) {
-            throw new \LogicException('The argument type should be a class which implements .'.RequestDto::class.' interface! This should have been check in the supports function!');
+            throw new \LogicException('The parameter has to have the attribute .'.FromRequest::class.'! This should have been check in the supports function!');
         }
 
         $routeParameters = $this->getRouteParams($request);
@@ -68,13 +66,24 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
 
     private function isSupportedArgument(ArgumentMetadata $argument): bool
     {
+        // no type and non existent classes should be ignored
         if (!is_string($argument->getType()) || '' === $argument->getType() || !class_exists($argument->getType())) {
             return false;
         }
 
-        $interfaces = class_implements($argument->getType());
+        // attribute via parameter
+        if ($argument->getAttribute() instanceof FromRequest) {
+            return true;
+        }
 
-        return false !== $interfaces && in_array(RequestDto::class, $interfaces, true);
+        // attribute via class
+        $class = new ReflectionClass($argument->getType());
+        $attributes = $class->getAttributes(FromRequest::class, ReflectionAttribute::IS_INSTANCEOF);
+        if (count($attributes) > 0) {
+            return true;
+        }
+
+        return false;
     }
 
     private function getRequestContent(Request $request): array
@@ -114,7 +123,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         return $params;
     }
 
-    private function denormalize(array $data, string $class, array $options): RequestDto
+    private function denormalize(array $data, string $class, array $options): object
     {
         try {
             if ($data) {
@@ -129,7 +138,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         }
     }
 
-    private function validate(RequestDto $dto): void
+    private function validate(object $dto): void
     {
         $violations = $this->validator->validate($dto);
         if ($violations->count() > 0) {

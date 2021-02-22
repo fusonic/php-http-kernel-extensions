@@ -3,12 +3,13 @@
 // Copyright (c) Fusonic GmbH. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for license information.
 
+declare(strict_types=1);
+
 namespace Fusonic\HttpKernelExtensions\Tests\Dto;
 
-use Fusonic\HttpKernelExtensions\Dto\RequestDto;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class QueryDto implements RequestDto
+class QueryDto
 {
     /**
      * @Assert\NotNull
