@@ -118,6 +118,34 @@ class RequestDtoResolverTest extends TestCase
         self::assertInstanceOf(TestDto::class, get_class($dto));
     }
 
+    public function testExpectedFloatProvidedIntStrictTypeChecking(): void
+    {
+        /** @var string $data */
+        $data = json_encode(
+            [
+                'int' => 5,
+                'float' => 9,
+                'string' => 'foobar',
+                'bool' => true,
+                'subType' => [
+                    'test' => 'barfoo',
+                ],
+            ]
+        );
+
+        $request = new Request([], [], [], [], [], [], $data);
+        $request->setMethod(Request::METHOD_POST);
+        $argument = $this->createArgumentMetadata(TestDto::class, new FromRequest());
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
+        $generator = $resolver->resolve($request, $argument);
+
+        /** @var TestDto $dto */
+        $dto = $generator->current();
+        self::assertInstanceOf(TestDto::class, $dto);
+        self::assertEquals(9, $dto->getFloat());
+    }
+
     public function testStrictTypeMappingForPostRequestBody(): void
     {
         /** @var string $data */

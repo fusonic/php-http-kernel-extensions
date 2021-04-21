@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ArgumentValueResolverInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -127,7 +128,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
     {
         try {
             if ($data) {
-                $dto = $this->serializer->denormalize($data, $class, null, $options);
+                $dto = $this->serializer->denormalize($data, $class, JsonEncoder::FORMAT, $options);
             } else {
                 $dto = new $class();
             }

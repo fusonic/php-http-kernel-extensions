@@ -36,7 +36,7 @@ Our `RequestDtoResolver` can be used to map requests data directly to objects. I
    to transport the request data (aka data transfer objects) from your controller to your business logic. In
     addition it will also validate the resulting object with Symfony Validation if you set validation annotations. 
 
-- Mapping will only happen for parameters accompanied by the `Fusonic\HttpKernelExtensions\Attribute\FromRequest` [attribute](src/Attribute/FromRequest.php).
+- Mapping will happen for parameters accompanied by the `Fusonic\HttpKernelExtensions\Attribute\FromRequest` [attribute](src/Attribute/FromRequest.php). Alternatively the attribute can also be set on the class of the parameter (see example below).
 - Strong type checks will be enforced for PUT, POST, PATCH and DELETE during serialization and it will result in an
  error if the types in the request body don't match the expected ones in the dto.
 - Type enforcement will be disabled for all other requests e.g. GET as query parameters will always be transferred as
@@ -50,6 +50,7 @@ Our `RequestDtoResolver` can be used to map requests data directly to objects. I
  - A `BadRequestHttpException` will be thrown when the request or rather the resulting object is invalid according to
   the Symfony Validation, the request body can't be deserialized, it contains invalid JSON or the hierarchy levels 
    of the request body of exceed 512.
+- Currently, only JSON is supported as payload format and the payload is only taken from the requests body.
 
 ### How to use?
 
