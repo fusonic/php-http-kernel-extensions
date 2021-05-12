@@ -172,3 +172,7 @@ final class FooController extends AbstractController
     }
 }
 ```
+
+#### Error handler
+
+The extension provides a default error handler in here `http-kernel-extensions/src/ErrorHandler/ErrorHandler.php` which throws `BadRequestHttpExceptions` in case the request can't be deserialized onto the given class or Symfony Validation deems it invalid. If that does not match your needs you can simply provide your own error handler by implementing the `ErrorHandlerInterface` and passing it to the `RequestDtoResolver`.

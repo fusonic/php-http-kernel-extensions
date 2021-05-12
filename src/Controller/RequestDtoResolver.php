@@ -8,6 +8,8 @@ declare(strict_types=1);
 namespace Fusonic\HttpKernelExtensions\Controller;
 
 use Fusonic\HttpKernelExtensions\Attribute\FromRequest;
+use Fusonic\HttpKernelExtensions\ErrorHandler\ErrorHandler;
+use Fusonic\HttpKernelExtensions\ErrorHandler\ErrorHandlerInterface;
 use Generator;
 use ReflectionAttribute;
 use ReflectionClass;
@@ -16,10 +18,9 @@ use Symfony\Component\HttpKernel\Controller\ArgumentValueResolverInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
+use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
-use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class RequestDtoResolver implements ArgumentValueResolverInterface
@@ -32,8 +33,11 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         Request::METHOD_PATCH,
     ];
 
-    public function __construct(private DenormalizerInterface $serializer, private ValidatorInterface $validator)
+    private ErrorHandlerInterface $errorHandler;
+
+    public function __construct(private DenormalizerInterface $serializer, private ValidatorInterface $validator, ?ErrorHandlerInterface $errorHandler = null)
     {
+        $this->errorHandler = $errorHandler ?? new ErrorHandler();
     }
 
     public function supports(Request $request, ArgumentMetadata $argument): bool
@@ -134,8 +138,8 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
             }
 
             return $dto;
-        } catch (NotNormalizableValueException $ex) {
-            throw new BadRequestHttpException($ex->getMessage());
+        } catch (ExceptionInterface $ex) {
+            throw $this->errorHandler->handleDenormalizeError($ex);
         }
     }
 
@@ -143,13 +147,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
     {
         $violations = $this->validator->validate($dto);
         if ($violations->count() > 0) {
-            $details = '';
-            /** @var ConstraintViolation $violation */
-            foreach ($violations as $violation) {
-                $details .= $violation->getPropertyPath().': '.$violation->getMessage().PHP_EOL;
-            }
-
-            throw new BadRequestHttpException('The request payload is invalid!'.PHP_EOL.$details);
+            $this->errorHandler->handleConstraintViolations($violations);
         }
     }
 
