@@ -12,6 +12,7 @@ use Fusonic\HttpKernelExtensions\Controller\RequestDtoResolver;
 use Fusonic\HttpKernelExtensions\Tests\Dto\ClassDtoWithAttribute;
 use Fusonic\HttpKernelExtensions\Tests\Dto\EmptyDto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\NotADto;
+use Fusonic\HttpKernelExtensions\Tests\Dto\QueryDtoWithAttribute;
 use Fusonic\HttpKernelExtensions\Tests\Dto\RouteParameterDto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\TestDto;
 use PHPUnit\Framework\TestCase;
@@ -79,6 +80,15 @@ class RequestDtoResolverTest extends TestCase
     {
         $request = new Request([], [], ['_route_params' => ['id' => 5]]);
         $argument = $this->createArgumentMetadata(TestDto::class, [new FromRequest()]);
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
+        self::assertTrue($resolver->supports($request, $argument));
+    }
+
+    public function testSupportWithAttributeSetToClass(): void
+    {
+        $request = new Request([], [], ['_route_params' => ['id' => 5]]);
+        $argument = $this->createArgumentMetadata(QueryDtoWithAttribute::class, []);
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         self::assertTrue($resolver->supports($request, $argument));

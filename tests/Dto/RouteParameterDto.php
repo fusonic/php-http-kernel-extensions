@@ -11,21 +11,15 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class RouteParameterDto
 {
-    /**
-     * @Assert\NotNull
-     */
+    #[Assert\NotNull]
     private int $int;
 
-    /**
-     * @Assert\NotNull
-     */
+    #[Assert\NotNull]
     private string $string;
     private string $float;
     private int $bool;
 
-    /**
-     * @Assert\Valid
-     */
+    #[Assert\Valid]
     private SubTypeDto $subType;
 
     private string $notSetValue;

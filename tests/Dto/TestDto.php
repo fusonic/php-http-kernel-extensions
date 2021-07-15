@@ -11,14 +11,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class TestDto
 {
-    /**
-     * @Assert\NotNull
-     */
+    #[Assert\NotNull]
     private int $int;
 
-    /**
-     * @Assert\NotNull
-     */
+    #[Assert\NotNull]
     private string $string;
     private float $float;
     private bool $bool;

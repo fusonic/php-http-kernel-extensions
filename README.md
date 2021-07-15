@@ -11,9 +11,14 @@
 
 ## About
 
-This library contains a variety of extensions to the [Symfony HttpKernel component](https://symfony.com/doc/current/components/http_kernel.html). See below for details on each extension this lib provides and how it works.
+This library contains a variety of extensions to
+the [Symfony HttpKernel component](https://symfony.com/doc/current/components/http_kernel.html). See below for details
+on each extension this lib provides and how it works.
 
-Currently primary development takes place at a private repository at Gitlab.com. The project on Github.com is updated regularly, but does not include any issues managed at Gitlab. However, we are happily accepting issues and pull requests on Github as well! Feel free to open an issue or merge request. If we see broader community engagement in the future, we may consider switching our primary development to Github.
+Currently primary development takes place at a private repository at Gitlab.com. The project on Github.com is updated
+regularly, but does not include any issues managed at Gitlab. However, we are happily accepting issues and pull requests
+on Github as well! Feel free to open an issue or merge request. If we see broader community engagement in the future, we
+may consider switching our primary development to Github.
 
 ## Install
 
@@ -27,35 +32,42 @@ composer require fusonic/http-kernel-extensions
 
 ### The RequestDtoResolver
 
-In Symfony there exists a thing called [argument resolvers](https://symfony.com/doc/current/controller/argument_value_resolver.html). They can be used to set the value of controller action arguments before the actions get called. There exists e.g. the `RequestValueResolver` which will inject the current request as an argument in the called  action. Similar to this we created our own argument resolver, but it does a few more things than just injecting an object.
+In Symfony there exists a thing
+called [argument resolvers](https://symfony.com/doc/current/controller/argument_value_resolver.html). They can be used
+to set the value of controller action arguments before the actions get called. There exists e.g.
+the `RequestValueResolver` which will inject the current request as an argument in the called action. Similar to this we
+created our own argument resolver, but it does a few more things than just injecting an object.
 
 #### What does it do?
-Our `RequestDtoResolver` can be used to map requests data directly to objects. Instead of manually getting all the
- information from your request and putting it in an object or - god forbid - passing around generic data arrays, this
-  class will leverage the Symfony Serializer to map requests to objects and by that enable you to have custom objects
-   to transport the request data (aka data transfer objects) from your controller to your business logic. In
-    addition it will also validate the resulting object with Symfony Validation if you set validation annotations. 
 
-- Mapping will happen for parameters accompanied by the `Fusonic\HttpKernelExtensions\Attribute\FromRequest` [attribute](src/Attribute/FromRequest.php). Alternatively the attribute can also be set on the class of the parameter (see example below).
+Our `RequestDtoResolver` can be used to map requests data directly to objects. Instead of manually getting all the
+information from your request and putting it in an object or - god forbid - passing around generic data arrays, this
+class will leverage the Symfony Serializer to map requests to objects and by that enable you to have custom objects to
+transport the request data (aka data transfer objects) from your controller to your business logic. In addition, it will
+also validate the resulting object with Symfony Validation if you set validation annotations.
+
+- Mapping will happen for parameters accompanied by
+  the `Fusonic\HttpKernelExtensions\Attribute\FromRequest` [attribute](src/Attribute/FromRequest.php). Alternatively the
+  attribute can also be set on the class of the parameter (see example below).
 - Strong type checks will be enforced for PUT, POST, PATCH and DELETE during serialization and it will result in an
- error if the types in the request body don't match the expected ones in the dto.
+  error if the types in the request body don't match the expected ones in the dto.
 - Type enforcement will be disabled for all other requests e.g. GET as query parameters will always be transferred as
- string.
+  string.
 - The request body will be combined with route parameters for PUT, POST, PATCH and DELETE requests (query parameters
- will be ignored in this case).
+  will be ignored in this case).
 - The query parameters will be combined with route parameters for all other requests (request body will be ignored in
- this case).
- - Route parameters will always override query parameters or request body values with the same name.
- - After deserializing the request to an object, validation will take place.
- - A `BadRequestHttpException` will be thrown when the request or rather the resulting object is invalid according to
-  the Symfony Validation, the request body can't be deserialized, it contains invalid JSON or the hierarchy levels 
-   of the request body of exceed 512.
+  this case).
+- Route parameters will always override query parameters or request body values with the same name.
+- After deserializing the request to an object, validation will take place.
+- A `BadRequestHttpException` will be thrown when the request or rather the resulting object is invalid according to the
+  Symfony Validation, the request body can't be deserialized, it contains invalid JSON or the hierarchy levels of the
+  request body of exceed 512.
 - Currently, only JSON is supported as payload format and the payload is only taken from the requests body.
 
 ### How to use?
 
 Supposing you are using a full Symfony setup you have to register the resolver as a service in your `services.yaml` as
- shown below to be called by Symfony.
+shown below to be called by Symfony.
 
 ```yaml
     Fusonic\HttpKernelExtensions\Controller\RequestDtoResolver:
@@ -64,7 +76,7 @@ Supposing you are using a full Symfony setup you have to register the resolver a
 ```
 
 Create your dto like e.g. our `UpdateFooDto` here. All the validation stuff is optional but getters and setters are
- needed by the serializer.
+needed by the serializer.
 
 ```php
 
@@ -122,7 +134,8 @@ final class UpdateFooDto
 
 #### Parameter attribute
 
-Finally, add the dto with the `RequestDtoArgument` to your controller action. Routing parameters are optional as well of course.
+Finally, add the dto with the `RequestDtoArgument` to your controller action. Routing parameters are optional as well of
+course.
 
 ```php
 
@@ -143,7 +156,8 @@ final class FooController extends AbstractController
 
 #### Class attribute
 
-Alternatively you can also add the attribute to the dto class itself instead of the parameter in the controller action if you prefer it this way.
+Alternatively you can also add the attribute to the dto class itself instead of the parameter in the controller action
+if you prefer it this way.
 
 ```php
 
@@ -175,4 +189,7 @@ final class FooController extends AbstractController
 
 #### Error handler
 
-The extension provides a default error handler in here `http-kernel-extensions/src/ErrorHandler/ErrorHandler.php` which throws `BadRequestHttpExceptions` in case the request can't be deserialized onto the given class or Symfony Validation deems it invalid. If that does not match your needs you can simply provide your own error handler by implementing the `ErrorHandlerInterface` and passing it to the `RequestDtoResolver`.
+The extension provides a default error handler in here `http-kernel-extensions/src/ErrorHandler/ErrorHandler.php` which
+throws `BadRequestHttpExceptions` in case the request can't be deserialized onto the given class or Symfony Validation
+deems it invalid. If that does not match your needs you can simply provide your own error handler by implementing
+the `ErrorHandlerInterface` and passing it to the `RequestDtoResolver`.
