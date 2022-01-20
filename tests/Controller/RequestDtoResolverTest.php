@@ -9,6 +9,7 @@ namespace Fusonic\HttpKernelExtensions\Tests\Controller;
 
 use Fusonic\HttpKernelExtensions\Attribute\FromRequest;
 use Fusonic\HttpKernelExtensions\Controller\RequestDtoResolver;
+use Fusonic\HttpKernelExtensions\Provider\ContextAwareProviderInterface;
 use Fusonic\HttpKernelExtensions\Tests\Dto\ClassDtoWithAttribute;
 use Fusonic\HttpKernelExtensions\Tests\Dto\EmptyDto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\NotADto;
@@ -395,6 +396,39 @@ class RequestDtoResolverTest extends TestCase
         /** @var EmptyDto $dto */
         $dto = $generator->current();
         self::assertInstanceOf(EmptyDto::class, $dto);
+    }
+
+    public function testContextAwareProviderCalling(): void
+    {
+        /** @var string $data */
+        $data = json_encode(
+            [
+                'int' => 5,
+                'float' => 9.99,
+                'string' => 'foobar',
+                'bool' => true,
+                'subType' => [
+                    'test' => 'barfoo',
+                ],
+            ]
+        );
+
+        $request = new Request([], [], [], [], [], [], $data);
+        $request->setMethod(Request::METHOD_POST);
+        $argument = $this->createArgumentMetadata(TestDto::class, [new FromRequest()]);
+
+        $mockProvider1 = $this->createMock(ContextAwareProviderInterface::class);
+        $mockProvider1->expects(self::once())->method('supports')->willReturn(true);
+        $mockProvider1->expects(self::once())->method('provide');
+
+        $mockProvider2 = $this->createMock(ContextAwareProviderInterface::class);
+        $mockProvider2->expects(self::once())->method('supports')->willReturn(false);
+        $mockProvider2->expects(self::never())->method('provide');
+
+        $providers = [$mockProvider1, $mockProvider2];
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator(), null, $providers);
+        $resolver->resolve($request, $argument)->current();
     }
 
     private function getDenormalizer(): DenormalizerInterface

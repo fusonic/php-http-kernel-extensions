@@ -10,6 +10,7 @@ namespace Fusonic\HttpKernelExtensions\Controller;
 use Fusonic\HttpKernelExtensions\Attribute\FromRequest;
 use Fusonic\HttpKernelExtensions\ErrorHandler\ErrorHandler;
 use Fusonic\HttpKernelExtensions\ErrorHandler\ErrorHandlerInterface;
+use Fusonic\HttpKernelExtensions\Provider\ContextAwareProviderInterface;
 use Generator;
 use ReflectionAttribute;
 use ReflectionClass;
@@ -33,11 +34,20 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         Request::METHOD_PATCH,
     ];
 
+    /**
+     * @var ContextAwareProviderInterface[]
+     */
+    private iterable $providers;
     private ErrorHandlerInterface $errorHandler;
 
-    public function __construct(private DenormalizerInterface $serializer, private ValidatorInterface $validator, ?ErrorHandlerInterface $errorHandler = null)
-    {
+    public function __construct(
+        private DenormalizerInterface $serializer,
+        private ValidatorInterface $validator,
+        ?ErrorHandlerInterface $errorHandler = null,
+        iterable $providers = []
+    ) {
         $this->errorHandler = $errorHandler ?? new ErrorHandler();
+        $this->providers = $providers;
     }
 
     public function supports(Request $request, ArgumentMetadata $argument): bool
@@ -64,9 +74,19 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         /** @var string $clazz */
         $clazz = $argument->getType();
         $dto = $this->denormalize($data, $clazz, $options);
+        $this->applyProviders($dto);
         $this->validate($dto);
 
         yield $dto;
+    }
+
+    private function applyProviders(object $dto): void
+    {
+        foreach ($this->providers as $provider) {
+            if ($provider instanceof ContextAwareProviderInterface && $provider->supports($dto)) {
+                $provider->provide($dto);
+            }
+        }
     }
 
     private function isSupportedArgument(ArgumentMetadata $argument): bool

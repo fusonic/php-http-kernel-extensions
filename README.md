@@ -50,7 +50,7 @@ also validate the resulting object with Symfony Validation if you set validation
   the `Fusonic\HttpKernelExtensions\Attribute\FromRequest` [attribute](src/Attribute/FromRequest.php). Alternatively the
   attribute can also be set on the class of the parameter (see example below).
 - Strong type checks will be enforced for PUT, POST, PATCH and DELETE during serialization and it will result in an
-  error if the types in the request body don't match the expected ones in the dto.
+  error if the types in the request body don't match the expected ones in the DTO.
 - Type enforcement will be disabled for all other requests e.g. GET as query parameters will always be transferred as
   string.
 - The request body will be combined with route parameters for PUT, POST, PATCH and DELETE requests (query parameters
@@ -75,7 +75,7 @@ shown below to be called by Symfony.
             - { name: controller.argument_value_resolver, priority: 50 }
 ```
 
-Create your dto like e.g. our `UpdateFooDto` here. All the validation stuff is optional but getters and setters are
+Create your DTO like e.g. our `UpdateFooDto` here. All the validation stuff is optional but getters and setters are
 needed by the serializer.
 
 ```php
@@ -134,7 +134,7 @@ final class UpdateFooDto
 
 #### Parameter attribute
 
-Finally, add the dto with the `RequestDtoArgument` to your controller action. Routing parameters are optional as well of
+Finally, add the DTO with the `RequestDtoArgument` to your controller action. Routing parameters are optional as well of
 course.
 
 ```php
@@ -156,7 +156,7 @@ final class FooController extends AbstractController
 
 #### Class attribute
 
-Alternatively you can also add the attribute to the dto class itself instead of the parameter in the controller action
+Alternatively you can also add the attribute to the DTO class itself instead of the parameter in the controller action
 if you prefer it this way.
 
 ```php
@@ -193,3 +193,72 @@ The extension provides a default error handler in here `http-kernel-extensions/s
 throws `BadRequestHttpExceptions` in case the request can't be deserialized onto the given class or Symfony Validation
 deems it invalid. If that does not match your needs you can simply provide your own error handler by implementing
 the `ErrorHandlerInterface` and passing it to the `RequestDtoResolver`.
+
+#### ContextAwareProvider
+
+There are cases where you want to add data to your DTOs but not through the consumer of the API but, for example, depending on the currently logged in user. You could do that manually after you received your DTO in the controller, get the user, set the user for the DTO and then move on with the processing. As you set it after the creation of the DTO you cannot work with the validation and have to make it nullable as well. And you might have to do some additional checks in your business logic afterwards to ensure everything you need is set.
+
+Or you just create and register a provider, implement (and test) it once and be done with it. All providers will be called by the `RequestDtoResolver`, retrieve the needed data for the supported DTO, set it in your DTO and then the validation will take place. By the time you get it in your controller it's complete and validated. How do you do that?
+
+1. Create a provider and implement the two methods of the `ContextAwareProvideInterface`.
+
+```php
+<?php
+
+// ...
+
+final class UserIdAwareProvider implements ContextAwareProviderInterface
+{
+    public function __construct(private UserProviderInterface $userProvider)
+    {
+    }
+
+    public function supports(object $dto): bool
+    {
+        return $dto instanceof UserIdAwareInterface;
+    }
+
+    public function provide(object $dto): void
+    {
+        if(!($dto instanceof UserIdAwareInterface)){
+            throw new \LogicException('Object is no instance of '.UserIdAwareInterface::class);
+        }
+
+        $user = $this->userProvider->getUser();
+        $dto->withUserId($user->getId());
+    }
+}
+```
+
+2. Create the interface to mark the class you support and set the data.
+
+```php
+<?php
+
+//... 
+
+interface UserIdAwareInterface
+{
+    public function withUserId(int $id): void;
+}
+
+```
+
+3. Implement the interface in the DTO.
+4. Finally, pass the providers into the resolver. If you are using Symfony you will be doing that in the `services.yaml` and it will look similar to this.
+```yaml
+#...
+    _instanceof:
+        Fusonic\HttpKernelExtensions\Provider\ContextAwareProviderInterface:
+            tags:
+                - {name: fusonic.http_kernel_extensions.context_aware_provider}
+
+    Fusonic\HttpKernelExtensions\Controller\RequestDtoResolver:
+        tags:
+            - { name: controller.argument_value_resolver, priority: 50 }
+        arguments:
+            - '@serializer'
+            - '@validator'
+            - null
+            - !tagged_iterator fusonic.http_kernel_extensions.context_aware_provider
+```
