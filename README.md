@@ -62,6 +62,9 @@ also validate the resulting object with Symfony Validation if you set validation
 - A `BadRequestHttpException` will be thrown when the request or rather the resulting object is invalid according to the
   Symfony Validation, the request body can't be deserialized, it contains invalid JSON or the hierarchy levels of the
   request body of exceed 512.
+- If you are using the [ConstraintViolationErrorHandler](src/ErrorHandler/ConstraintViolationErrorHandler.php) error handler, a
+  [ConstraintViolationException](src/Exception/ConstraintViolationException.php) will be thrown if the validation of your object
+  fails. You can also implement your own handler by implementing the [ErrorHandlerInterface](src/ErrorHandler/ErrorHandlerInterface.php).
 - Currently, only JSON is supported as payload format and the payload is only taken from the requests body.
 
 ### How to use?
@@ -84,20 +87,14 @@ needed by the serializer.
 
 final class UpdateFooDto
 {
-    /**
-     * @Assert\NotNull(message="Id should not be null.")
-     * @Assert\Positive(message="Id should be a positive integer.")
-     */
+    #[Assert\NotNull]
+    #[Assert\Positive]
     private int $id;
 
-    /**
-     * @Assert\NotBlank(message="Client version should not be be blank.")
-     */
+    #[Assert\NotBlank]
     private string $clientVersion;
 
-    /**
-     * @Assert\NotNull(message="Browser info should not be null.")
-     */
+    #[Assert\NotNull]
     private array $browserInfo;
 
     public function getClientVersion(): string
@@ -187,12 +184,64 @@ final class FooController extends AbstractController
 }
 ```
 
-#### Error handler
+#### Error handling
 
-The extension provides a default error handler in here `http-kernel-extensions/src/ErrorHandler/ErrorHandler.php` which
-throws `BadRequestHttpExceptions` in case the request can't be deserialized onto the given class or Symfony Validation
-deems it invalid. If that does not match your needs you can simply provide your own error handler by implementing
-the `ErrorHandlerInterface` and passing it to the `RequestDtoResolver`.
+The extension provides a default error handler (`http-kernel-extensions/src/ErrorHandler/ConstraintViolationErrorHandler.php`) which
+handles common de-normalization errors that should be considered type errors. It will create a
+`Fusonic\HttpKernelExtensions\Exception\ConstraintViolationException` [ConstraintViolationException](src/Exception/ConstraintViolationException.php)
+which can be used with the provided `Fusonic\HttpKernelExtensions\Normalizer\ConstraintViolationExceptionNormalizer` [ConstraintViolationExceptionNormalizer](src/Normalizer/ConstraintViolationExceptionNormalizer.php).
+This normalizer is uses on Symfony's built-in `Symfony\Component\Serializer\Normalizer\ConstraintViolationListNormalizer` and enhances it
+with some extra information: an `errorCode` and `messageTemplate`. Both useful for parsing validation errors on the client side.
+If that does not match your needs you can simply provide your own error handler by implementing
+the `Fusonic\HttpKernelExtensions\ErrorHandler\ErrorHandlerInterface` and passing it to the `RequestDtoResolver`.
+
+You have to register the normalizer as a service like this:
+
+```yaml
+  Fusonic\HttpKernelExtensions\Normalizer\ConstraintViolationExceptionNormalizer:
+        arguments:
+            - "@serializer.normalizer.constraint_violation_list"
+        tags:
+          - { name: serializer.normalizer }
+```
+
+##### Using an exception listener/subscriber
+In Symfony you can use an exception listener or subscriber to eventually convert the `ConstraintViolationException` into an actual response using
+the `Fusonic\HttpKernelExtensions\Normalizer\ConstraintViolationExceptionNormalizer`. For example:
+
+```php
+
+use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Fusonic\HttpKernelExtensions\Exception\ConstraintViolationException;
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+
+final class ExceptionSubscriber implements EventSubscriberInterface {
+
+    public function __construct(private NormalizerInterface $normalizer) 
+    {
+    }
+
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            KernelEvents::EXCEPTION => 'onKernelException',
+        ];
+    }
+
+    public function onKernelException(ExceptionEvent $event): void
+    {
+        $throwable = $event->getThrowable();
+        
+        if ($throwable instanceof ConstraintViolationException) {
+            $data = $this->normalizer->normalize($throwable);
+            $event->setResponse(new JsonResponse($data, 422));
+        }
+    }
+}
+```
+
+Check the [Events and Event Listeners](https://symfony.com/doc/current/event_dispatcher.html) for details.
 
 #### ContextAwareProvider
 

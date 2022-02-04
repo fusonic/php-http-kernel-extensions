@@ -19,6 +19,7 @@ class ClassDtoWithAttribute
     #[Assert\Valid]
     private SubTypeDto $subType;
 
+    // @phpstan-ignore-next-line
     private string $notSetValue;
 
     public function getInt(): int

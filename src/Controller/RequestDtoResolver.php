@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace Fusonic\HttpKernelExtensions\Controller;
 
 use Fusonic\HttpKernelExtensions\Attribute\FromRequest;
-use Fusonic\HttpKernelExtensions\ErrorHandler\ErrorHandler;
+use Fusonic\HttpKernelExtensions\ErrorHandler\ConstraintViolationErrorHandler;
 use Fusonic\HttpKernelExtensions\ErrorHandler\ErrorHandlerInterface;
 use Fusonic\HttpKernelExtensions\Provider\ContextAwareProviderInterface;
 use Generator;
@@ -46,7 +46,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         ?ErrorHandlerInterface $errorHandler = null,
         iterable $providers = []
     ) {
-        $this->errorHandler = $errorHandler ?? new ErrorHandler();
+        $this->errorHandler = $errorHandler ?? new ConstraintViolationErrorHandler();
         $this->providers = $providers;
     }
 
@@ -71,9 +71,9 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
             $data = $this->mergeRequestData($this->getRequestQueries($request), $routeParameters);
         }
 
-        /** @var string $clazz */
-        $clazz = $argument->getType();
-        $dto = $this->denormalize($data, $clazz, $options);
+        /** @var class-string $className */
+        $className = $argument->getType();
+        $dto = $this->denormalize($data, $className, $options);
         $this->applyProviders($dto);
         $this->validate($dto);
 
@@ -91,7 +91,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
 
     private function isSupportedArgument(ArgumentMetadata $argument): bool
     {
-        // no type and non existent classes should be ignored
+        // no type and nonexistent classes should be ignored
         if (!is_string($argument->getType()) || '' === $argument->getType() || !class_exists($argument->getType())) {
             return false;
         }

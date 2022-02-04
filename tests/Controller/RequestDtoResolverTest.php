@@ -9,6 +9,8 @@ namespace Fusonic\HttpKernelExtensions\Tests\Controller;
 
 use Fusonic\HttpKernelExtensions\Attribute\FromRequest;
 use Fusonic\HttpKernelExtensions\Controller\RequestDtoResolver;
+use Fusonic\HttpKernelExtensions\Exception\ConstraintViolationException;
+use Fusonic\HttpKernelExtensions\Normalizer\ConstraintViolationExceptionNormalizer;
 use Fusonic\HttpKernelExtensions\Provider\ContextAwareProviderInterface;
 use Fusonic\HttpKernelExtensions\Tests\Dto\ClassDtoWithAttribute;
 use Fusonic\HttpKernelExtensions\Tests\Dto\EmptyDto;
@@ -106,7 +108,7 @@ class RequestDtoResolverTest extends TestCase
 
     public function testValidation(): void
     {
-        $this->expectException(BadRequestHttpException::class);
+        $this->expectException(ConstraintViolationException::class);
 
         /** @var string $data */
         $data = json_encode(
@@ -125,7 +127,7 @@ class RequestDtoResolverTest extends TestCase
 
         /** @var TestDto $dto */
         $dto = $iterable->current();
-        self::assertInstanceOf(TestDto::class, get_class($dto));
+        self::assertInstanceOf(TestDto::class, $dto);
     }
 
     public function testExpectedFloatProvidedIntStrictTypeChecking(): void
@@ -191,7 +193,8 @@ class RequestDtoResolverTest extends TestCase
 
     public function testSkippingBodyGetRequest(): void
     {
-        $this->expectException(BadRequestHttpException::class);
+        $this->expectException(ConstraintViolationException::class);
+
         /** @var string $data */
         $data = json_encode(
             [
@@ -289,7 +292,8 @@ class RequestDtoResolverTest extends TestCase
 
     public function testInvalidQueryParameterHandling(): void
     {
-        $this->expectException(BadRequestHttpException::class);
+        $this->expectException(ConstraintViolationException::class);
+
         $query = [
             'int' => [
                 'subentity' => [1, 2, 3, 4],
@@ -359,9 +363,9 @@ class RequestDtoResolverTest extends TestCase
 
     public function testInvalidTypeMappingHandling(): void
     {
-        $this->expectException(BadRequestHttpException::class);
+        $this->expectException(ConstraintViolationException::class);
         $this->expectExceptionMessage(
-            'The type of the "float" attribute for class "Fusonic\HttpKernelExtensions\Tests\Dto\TestDto" must be one of "float" ("string" given).'
+            'ConstraintViolation: This value should be of type float.'
         );
         /** @var string $data */
         $data = json_encode(
@@ -439,7 +443,7 @@ class RequestDtoResolverTest extends TestCase
             new ProblemNormalizer(),
             new JsonSerializableNormalizer(),
             new DateTimeNormalizer(),
-            new ConstraintViolationListNormalizer(),
+            new ConstraintViolationExceptionNormalizer(new ConstraintViolationListNormalizer()),
             new DateTimeZoneNormalizer(),
             new DateIntervalNormalizer(),
             new DataUriNormalizer(),
