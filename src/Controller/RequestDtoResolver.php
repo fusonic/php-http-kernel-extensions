@@ -97,7 +97,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         }
 
         // attribute via parameter
-        if ($argument->getAttribute() instanceof FromRequest) {
+        if ($argument->getAttributes(FromRequest::class)) {
             return true;
         }
 

@@ -544,14 +544,6 @@ class RequestDtoResolverTest extends TestCase
 
     private function createArgumentMetadata(string $class, array $arguments): ArgumentMetadata
     {
-        // workaround for deprecation in SF 5.3
-        // condition can be removed with next major version or drop of Symfony <5.3 support
-        if (!empty($arguments)) {
-            $arguments = $arguments[0];
-        } else {
-            $arguments = null;
-        }
-
         return new ArgumentMetadata('dto', $class, false, false, null, false, $arguments);
     }
 

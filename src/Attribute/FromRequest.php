@@ -8,9 +8,8 @@ declare(strict_types=1);
 namespace Fusonic\HttpKernelExtensions\Attribute;
 
 use Attribute;
-use Symfony\Component\HttpKernel\Attribute\ArgumentInterface;
 
 #[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_CLASS)]
-class FromRequest implements ArgumentInterface
+class FromRequest
 {
 }
