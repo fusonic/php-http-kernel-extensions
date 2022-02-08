@@ -11,6 +11,7 @@ use ArgumentCountError;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\ArgumentCountConstraintViolation;
 use Fusonic\HttpKernelExtensions\Exception\ConstraintViolationException;
 use Fusonic\HttpKernelExtensions\Normalizer\ConstraintViolationExceptionNormalizer;
+use Fusonic\HttpKernelExtensions\Tests\Dto\DummyClassA;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Serializer\Normalizer\ConstraintViolationListNormalizer;
 

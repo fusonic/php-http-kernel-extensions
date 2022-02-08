@@ -8,11 +8,16 @@ declare(strict_types=1);
 namespace Fusonic\HttpKernelExtensions\Tests\Controller;
 
 use Fusonic\HttpKernelExtensions\Attribute\FromRequest;
+use Fusonic\HttpKernelExtensions\ConstraintViolation\ArgumentCountConstraintViolation;
+use Fusonic\HttpKernelExtensions\ConstraintViolation\MissingConstructorArgumentsConstraintViolation;
+use Fusonic\HttpKernelExtensions\ConstraintViolation\NotNormalizableValueConstraintViolation;
+use Fusonic\HttpKernelExtensions\ConstraintViolation\TypeConstraintViolation;
 use Fusonic\HttpKernelExtensions\Controller\RequestDtoResolver;
 use Fusonic\HttpKernelExtensions\Exception\ConstraintViolationException;
 use Fusonic\HttpKernelExtensions\Normalizer\ConstraintViolationExceptionNormalizer;
 use Fusonic\HttpKernelExtensions\Provider\ContextAwareProviderInterface;
 use Fusonic\HttpKernelExtensions\Tests\Dto\ClassDtoWithAttribute;
+use Fusonic\HttpKernelExtensions\Tests\Dto\DummyClassA;
 use Fusonic\HttpKernelExtensions\Tests\Dto\EmptyDto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\NotADto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\QueryDtoWithAttribute;
@@ -39,6 +44,7 @@ use Symfony\Component\Serializer\Normalizer\ProblemNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Throwable;
 
 class RequestDtoResolverTest extends TestCase
 {
@@ -433,6 +439,88 @@ class RequestDtoResolverTest extends TestCase
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator(), null, $providers);
         $resolver->resolve($request, $argument)->current();
+    }
+
+    /**
+     * @param array<mixed> $data
+     * @param class-string $dtoClass
+     * @param class-string $expectedViolationClass
+     *
+     * @dataProvider errorTestData
+     */
+    public function testConstraintViolationErrors(array $data, string $dtoClass, string $expectedViolationClass): void
+    {
+        /** @var string $data */
+        $data = json_encode($data);
+        $request = new Request([], [], [], [], [], [], $data);
+        $request->setMethod(Request::METHOD_POST);
+
+        $argument = $this->createArgumentMetadata($dtoClass, [new FromRequest()]);
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
+        self::assertTrue($resolver->supports($request, $argument));
+        $generator = $resolver->resolve($request, $argument);
+
+        $exception = null;
+        try {
+            $generator->current();
+        } catch (Throwable $e) {
+            $exception = $e;
+        }
+
+        self::assertNotNull($exception);
+        self::assertInstanceOf(ConstraintViolationException::class, $exception);
+        $violations = $exception->getConstraintViolationList();
+
+        self::assertCount(1, $violations);
+        self::assertInstanceOf($expectedViolationClass, $violations->get(0));
+    }
+
+    public function testTypeError(): void
+    {
+        $request = new Request(['requiredArgument' => null]);
+        $request->setMethod(Request::METHOD_GET);
+
+        $argument = $this->createArgumentMetadata(DummyClassA::class, [new FromRequest()]);
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
+        self::assertTrue($resolver->supports($request, $argument));
+        $generator = $resolver->resolve($request, $argument);
+
+        $exception = null;
+        try {
+            $generator->current();
+        } catch (Throwable $e) {
+            $exception = $e;
+        }
+
+        self::assertNotNull($exception);
+        self::assertInstanceOf(ConstraintViolationException::class, $exception);
+        $violations = $exception->getConstraintViolationList();
+
+        self::assertCount(1, $violations);
+        self::assertInstanceOf(TypeConstraintViolation::class, $violations->get(0));
+    }
+
+    public function errorTestData(): array
+    {
+        return [
+            [
+                [],
+                DummyClassA::class,
+                ArgumentCountConstraintViolation::class,
+            ],
+            [
+                ['requiredArgument' => 'test'],
+                DummyClassA::class,
+                NotNormalizableValueConstraintViolation::class,
+            ],
+            [
+                ['nonExistingArgument' => 1],
+                DummyClassA::class,
+                MissingConstructorArgumentsConstraintViolation::class,
+            ],
+        ];
     }
 
     private function getDenormalizer(): DenormalizerInterface

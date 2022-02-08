@@ -19,10 +19,10 @@ use Symfony\Component\HttpKernel\Controller\ArgumentValueResolverInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Throwable;
 
 final class RequestDtoResolver implements ArgumentValueResolverInterface
 {
@@ -158,7 +158,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
             }
 
             return $dto;
-        } catch (ExceptionInterface $ex) {
+        } catch (Throwable $ex) {
             throw $this->errorHandler->handleDenormalizeError($ex);
         }
     }

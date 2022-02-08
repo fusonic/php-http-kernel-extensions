@@ -13,7 +13,6 @@ use Fusonic\HttpKernelExtensions\ConstraintViolation\MissingConstructorArguments
 use Fusonic\HttpKernelExtensions\ConstraintViolation\NotNormalizableValueConstraintViolation;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\TypeConstraintViolation;
 use Fusonic\HttpKernelExtensions\Exception\ConstraintViolationException;
-use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Exception\MissingConstructorArgumentsException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
@@ -22,7 +21,7 @@ use TypeError;
 
 class ConstraintViolationErrorHandler implements ErrorHandlerInterface
 {
-    public function handleDenormalizeError(ExceptionInterface $ex): Throwable
+    public function handleDenormalizeError(Throwable $ex): Throwable
     {
         if ($ex instanceof NotNormalizableValueException) {
             return ConstraintViolationException::fromConstraintViolation(

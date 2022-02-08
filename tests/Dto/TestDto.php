@@ -19,9 +19,7 @@ class TestDto
     private float $float;
     private bool $bool;
 
-    /**
-     * @Assert\Valid
-     */
+    #[Assert\Valid]
     private SubTypeDto $subType;
 
     // @phpstan-ignore-next-line

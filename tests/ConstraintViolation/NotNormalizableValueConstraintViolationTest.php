@@ -10,6 +10,7 @@ namespace Fusonic\HttpKernelExtensions\Tests\ConstraintViolation;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\NotNormalizableValueConstraintViolation;
 use Fusonic\HttpKernelExtensions\Exception\ConstraintViolationException;
 use Fusonic\HttpKernelExtensions\Normalizer\ConstraintViolationExceptionNormalizer;
+use Fusonic\HttpKernelExtensions\Tests\Dto\DummyClassB;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Symfony\Component\Serializer\Normalizer\ConstraintViolationListNormalizer;

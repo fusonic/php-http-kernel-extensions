@@ -5,7 +5,7 @@
 
 declare(strict_types=1);
 
-namespace Fusonic\HttpKernelExtensions\Tests\ConstraintViolation;
+namespace Fusonic\HttpKernelExtensions\Tests\Dto;
 
 class DummyClassA
 {
