@@ -9,6 +9,7 @@ namespace Fusonic\HttpKernelExtensions\Tests\Controller;
 
 use Fusonic\HttpKernelExtensions\Attribute\FromRequest;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\ArgumentCountConstraintViolation;
+use Fusonic\HttpKernelExtensions\ConstraintViolation\ArrayDenormalizerConstraintViolation;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\MissingConstructorArgumentsConstraintViolation;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\NotNormalizableValueConstraintViolation;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\TypeConstraintViolation;
@@ -16,9 +17,12 @@ use Fusonic\HttpKernelExtensions\Controller\RequestDtoResolver;
 use Fusonic\HttpKernelExtensions\Exception\ConstraintViolationException;
 use Fusonic\HttpKernelExtensions\Normalizer\ConstraintViolationExceptionNormalizer;
 use Fusonic\HttpKernelExtensions\Provider\ContextAwareProviderInterface;
+use Fusonic\HttpKernelExtensions\Tests\Dto\ArrayDto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\ClassDtoWithAttribute;
 use Fusonic\HttpKernelExtensions\Tests\Dto\DummyClassA;
 use Fusonic\HttpKernelExtensions\Tests\Dto\EmptyDto;
+use Fusonic\HttpKernelExtensions\Tests\Dto\IntArrayDto;
+use Fusonic\HttpKernelExtensions\Tests\Dto\NestedDto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\NotADto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\QueryDtoWithAttribute;
 use Fusonic\HttpKernelExtensions\Tests\Dto\RouteParameterDto;
@@ -32,6 +36,7 @@ use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
 use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+use Symfony\Component\Serializer\Normalizer\BackedEnumNormalizer;
 use Symfony\Component\Serializer\Normalizer\ConstraintViolationListNormalizer;
 use Symfony\Component\Serializer\Normalizer\DataUriNormalizer;
 use Symfony\Component\Serializer\Normalizer\DateIntervalNormalizer;
@@ -41,6 +46,8 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\JsonSerializableNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\ProblemNormalizer;
+use Symfony\Component\Serializer\Normalizer\UidNormalizer;
+use Symfony\Component\Serializer\Normalizer\UnwrappingDenormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -520,6 +527,26 @@ class RequestDtoResolverTest extends TestCase
                 DummyClassA::class,
                 MissingConstructorArgumentsConstraintViolation::class,
             ],
+            [
+                ['requiredArgument' => 1, 'items' => null],
+                ArrayDto::class,
+                ArrayDenormalizerConstraintViolation::class,
+            ],
+            [
+                ['items' => null],
+                IntArrayDto::class,
+                NotNormalizableValueConstraintViolation::class,
+            ],
+            [
+                ['objectArgument' => ['requiredArgument' => null]],
+                NestedDto::class,
+                NotNormalizableValueConstraintViolation::class,
+            ],
+            [
+                ['objectArgument' => null],
+                NestedDto::class,
+                MissingConstructorArgumentsConstraintViolation::class,
+            ],
         ];
     }
 
@@ -527,14 +554,19 @@ class RequestDtoResolverTest extends TestCase
     {
         $extractor = new PropertyInfoExtractor([], [new PhpDocExtractor(), new ReflectionExtractor()]);
         $encoders = [new JsonEncoder()];
+        $constraintViolationListNormalizer = new ConstraintViolationListNormalizer();
         $normalizers = [
+            new UnwrappingDenormalizer(),
+            new ConstraintViolationExceptionNormalizer($constraintViolationListNormalizer),
             new ProblemNormalizer(),
+            new UidNormalizer(),
             new JsonSerializableNormalizer(),
-            new DateTimeNormalizer(),
-            new ConstraintViolationExceptionNormalizer(new ConstraintViolationListNormalizer()),
+            $constraintViolationListNormalizer,
             new DateTimeZoneNormalizer(),
+            new DateTimeNormalizer(),
             new DateIntervalNormalizer(),
             new DataUriNormalizer(),
+            new BackedEnumNormalizer(),
             new ArrayDenormalizer(),
             new ObjectNormalizer(null, null, null, $extractor),
         ];

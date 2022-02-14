@@ -148,6 +148,11 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         return $params;
     }
 
+    /**
+     * @param array<mixed>         $data
+     * @param class-string         $class
+     * @param array<string, mixed> $options
+     */
     private function denormalize(array $data, string $class, array $options): object
     {
         try {
@@ -159,7 +164,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
 
             return $dto;
         } catch (Throwable $ex) {
-            throw $this->errorHandler->handleDenormalizeError($ex);
+            throw $this->errorHandler->handleDenormalizeError($ex, $data, $class);
         }
     }
 
@@ -171,6 +176,12 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         }
     }
 
+    /**
+     * @param array<mixed>         $data
+     * @param array<string, mixed> $routeParameters
+     *
+     * @return array<string, mixed>
+     */
     private function mergeRequestData(array $data, array $routeParameters): array
     {
         if (count($keys = array_intersect_key($data, $routeParameters)) > 0) {
