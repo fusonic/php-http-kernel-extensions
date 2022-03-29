@@ -59,13 +59,16 @@ also validate the resulting object with Symfony Validation if you set validation
   this case).
 - Route parameters will always override query parameters or request body values with the same name.
 - After deserializing the request to an object, validation will take place.
-- A `BadRequestHttpException` will be thrown when the request or rather the resulting object is invalid according to the
-  Symfony Validation, the request body can't be deserialized, it contains invalid JSON or the hierarchy levels of the
-  request body of exceed 512.
+- A `BadRequestHttpException` will be thrown when
+  - the resulting DTO object is invalid according to Symfony Validation
+  - the request body can't be deserialized
+  - the request contains invalid JSON
+  - the request contains valid JSON but the hierarchy levels exceeds 512
 - If you are using the [ConstraintViolationErrorHandler](src/ErrorHandler/ConstraintViolationErrorHandler.php) error handler, a
   [ConstraintViolationException](src/Exception/ConstraintViolationException.php) will be thrown if the validation of your object
   fails. You can also implement your own handler by implementing the [ErrorHandlerInterface](src/ErrorHandler/ErrorHandlerInterface.php).
-- Currently, only JSON is supported as payload format and the payload is only taken from the requests body.
+- Depending on the given content type it will either parse the request body as a regular form or parse the content as JSON
+  if the content type is set accordingly.
 
 ### How to use?
 

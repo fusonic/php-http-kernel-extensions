@@ -146,19 +146,17 @@ class RequestDtoResolverTest extends TestCase
     public function testExpectedFloatProvidedIntStrictTypeChecking(): void
     {
         /** @var string $data */
-        $data = json_encode(
-            [
-                'int' => 5,
-                'float' => 9,
-                'string' => 'foobar',
-                'bool' => true,
-                'subType' => [
-                    'test' => 'barfoo',
-                ],
-            ]
-        );
+        $data = json_encode([
+            'int' => 5,
+            'float' => 9,
+            'string' => 'foobar',
+            'bool' => true,
+            'subType' => [
+                'test' => 'barfoo',
+            ],
+        ], JSON_THROW_ON_ERROR);
 
-        $request = new Request([], [], [], [], [], [], $data);
+        $request = new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/json'], $data);
         $request->setMethod(Request::METHOD_POST);
         $argument = $this->createArgumentMetadata(TestDto::class, [new FromRequest()]);
 
@@ -171,22 +169,50 @@ class RequestDtoResolverTest extends TestCase
         self::assertEquals(9, $dto->getFloat());
     }
 
-    public function testStrictTypeMappingForPostRequestBody(): void
+    public function testStrictTypeMappingForPostJsonRequestBody(): void
     {
         /** @var string $data */
-        $data = json_encode(
-            [
-                'int' => 5,
-                'float' => 9.99,
-                'string' => 'foobar',
-                'bool' => true,
-                'subType' => [
-                    'test' => 'barfoo',
-                ],
-            ]
-        );
+        $data = json_encode([
+            'int' => 5,
+            'float' => 9.99,
+            'string' => 'foobar',
+            'bool' => true,
+            'subType' => [
+                'test' => 'barfoo',
+            ],
+        ], JSON_THROW_ON_ERROR);
 
-        $request = new Request([], [], [], [], [], [], $data);
+        $request = new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/json'], $data);
+        $request->setMethod(Request::METHOD_POST);
+        $argument = $this->createArgumentMetadata(TestDto::class, [new FromRequest()]);
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
+        $generator = $resolver->resolve($request, $argument);
+
+        /** @var TestDto $dto */
+        $dto = $generator->current();
+        self::assertInstanceOf(TestDto::class, $dto);
+        self::assertEquals(5, $dto->getInt());
+        self::assertEquals(9.99, $dto->getFloat());
+        self::assertEquals('foobar', $dto->getString());
+        self::assertEquals(true, $dto->isBool());
+
+        self::assertEquals('barfoo', $dto->getSubType()->getTest());
+    }
+
+    public function testStrictTypeMappingForPostFormRequestBody(): void
+    {
+        $data = [
+            'int' => 5,
+            'float' => 9.99,
+            'string' => 'foobar',
+            'bool' => true,
+            'subType' => [
+                'test' => 'barfoo',
+            ],
+        ];
+
+        $request = new Request([], $data, [], [], [], []);
         $request->setMethod(Request::METHOD_POST);
         $argument = $this->createArgumentMetadata(TestDto::class, [new FromRequest()]);
 
@@ -209,27 +235,24 @@ class RequestDtoResolverTest extends TestCase
         $this->expectException(ConstraintViolationException::class);
 
         /** @var string $data */
-        $data = json_encode(
-            [
-                'int' => 5,
-                'float' => 9.99,
-                'string' => 'foobar',
-                'bool' => true,
-                'subType' => [
-                    'test' => 'barfoo',
-                ],
-            ]
-        );
+        $data = json_encode([
+            'int' => 5,
+            'float' => 9.99,
+            'string' => 'foobar',
+            'bool' => true,
+            'subType' => [
+                'test' => 'barfoo',
+            ],
+        ], JSON_THROW_ON_ERROR);
 
-        $request = new Request([], [], [], [], [], [], $data);
+        $request = new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/json'], $data);
         $request->setMethod(Request::METHOD_GET);
         $argument = $this->createArgumentMetadata(TestDto::class, [new FromRequest()]);
 
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
 
-        /** @var TestDto $dto */
-        $dto = $generator->current();
+        $generator->current();
     }
 
     public function testInvalidRequestBodyHandling(): void
@@ -241,7 +264,7 @@ class RequestDtoResolverTest extends TestCase
             'string' => 'foobar',
             'bool' => true,
         ];
-        $request = new Request([], [], [], [], [], [], json_encode($data).'foobar');
+        $request = new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/json'], json_encode($data).'foobar');
         $request->setMethod(Request::METHOD_POST);
         $argument = $this->createArgumentMetadata(TestDto::class, [new FromRequest()]);
 
@@ -275,8 +298,7 @@ class RequestDtoResolverTest extends TestCase
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
 
-        /** @var TestDto $dto */
-        $dto = $generator->current();
+        $generator->current();
     }
 
     public function testQueryParameterHandling(): void
@@ -319,8 +341,7 @@ class RequestDtoResolverTest extends TestCase
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
 
-        /** @var TestDto $dto */
-        $dto = $generator->current();
+        $generator->current();
     }
 
     public function testRouteParameterHandlingWithNotMatchingTypes(): void
@@ -381,18 +402,16 @@ class RequestDtoResolverTest extends TestCase
             'ConstraintViolation: This value should be of type float.'
         );
         /** @var string $data */
-        $data = json_encode(
-            [
-                'int' => 5,
-                'float' => 'foobar',
-                'string' => 'foobar',
-                'bool' => true,
-                'subType' => [
-                    'test' => 'barfoo',
-                ],
-            ]
-        );
-        $request = new Request([], [], [], [], [], [], $data);
+        $data = json_encode([
+            'int' => 5,
+            'float' => 'foobar',
+            'string' => 'foobar',
+            'bool' => true,
+            'subType' => [
+                'test' => 'barfoo',
+            ],
+        ], JSON_THROW_ON_ERROR);
+        $request = new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/json'], $data);
         $request->setMethod(Request::METHOD_POST);
         $argument = $this->createArgumentMetadata(TestDto::class, [new FromRequest()]);
 
@@ -418,19 +437,17 @@ class RequestDtoResolverTest extends TestCase
     public function testContextAwareProviderCalling(): void
     {
         /** @var string $data */
-        $data = json_encode(
-            [
-                'int' => 5,
-                'float' => 9.99,
-                'string' => 'foobar',
-                'bool' => true,
-                'subType' => [
-                    'test' => 'barfoo',
-                ],
-            ]
-        );
+        $data = json_encode([
+            'int' => 5,
+            'float' => 9.99,
+            'string' => 'foobar',
+            'bool' => true,
+            'subType' => [
+                'test' => 'barfoo',
+            ],
+        ], JSON_THROW_ON_ERROR);
 
-        $request = new Request([], [], [], [], [], [], $data);
+        $request = new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/json'], $data);
         $request->setMethod(Request::METHOD_POST);
         $argument = $this->createArgumentMetadata(TestDto::class, [new FromRequest()]);
 
@@ -458,8 +475,8 @@ class RequestDtoResolverTest extends TestCase
     public function testConstraintViolationErrors(array $data, string $dtoClass, string $expectedViolationClass): void
     {
         /** @var string $data */
-        $data = json_encode($data);
-        $request = new Request([], [], [], [], [], [], $data);
+        $data = json_encode($data, JSON_THROW_ON_ERROR);
+        $request = new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/json'], $data);
         $request->setMethod(Request::METHOD_POST);
 
         $argument = $this->createArgumentMetadata($dtoClass, [new FromRequest()]);

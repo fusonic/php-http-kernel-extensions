@@ -65,7 +65,12 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
 
         if (in_array($request->getMethod(), self::METHODS_WITH_STRICT_TYPE_CHECKS, true)) {
             $options = [];
-            $data = $this->mergeRequestData($this->getRequestContent($request), $routeParameters);
+
+            if ('json' === $request->getContentType()) {
+                $data = $this->mergeRequestData($this->getRequestContent($request), $routeParameters);
+            } else {
+                $data = $this->mergeRequestData($request->request->all(), $routeParameters);
+            }
         } else {
             $options = [AbstractObjectNormalizer::DISABLE_TYPE_ENFORCEMENT => true];
             $data = $this->mergeRequestData($this->getRequestQueries($request), $routeParameters);
@@ -104,11 +109,8 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         // attribute via class
         $class = new ReflectionClass($argument->getType());
         $attributes = $class->getAttributes(FromRequest::class, ReflectionAttribute::IS_INSTANCEOF);
-        if (count($attributes) > 0) {
-            return true;
-        }
 
-        return false;
+        return count($attributes) > 0;
     }
 
     private function getRequestContent(Request $request): array
