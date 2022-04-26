@@ -138,7 +138,6 @@ class RequestDtoResolverTest extends TestCase
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $iterable = $resolver->resolve($request, $argument);
 
-        /** @var TestDto $dto */
         $dto = $iterable->current();
         self::assertInstanceOf(TestDto::class, $dto);
     }
@@ -163,7 +162,6 @@ class RequestDtoResolverTest extends TestCase
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
 
-        /** @var TestDto $dto */
         $dto = $generator->current();
         self::assertInstanceOf(TestDto::class, $dto);
         self::assertEquals(9, $dto->getFloat());
@@ -189,7 +187,6 @@ class RequestDtoResolverTest extends TestCase
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
 
-        /** @var TestDto $dto */
         $dto = $generator->current();
         self::assertInstanceOf(TestDto::class, $dto);
         self::assertEquals(5, $dto->getInt());
@@ -219,7 +216,6 @@ class RequestDtoResolverTest extends TestCase
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
 
-        /** @var TestDto $dto */
         $dto = $generator->current();
         self::assertInstanceOf(TestDto::class, $dto);
         self::assertEquals(5, $dto->getInt());
@@ -316,7 +312,6 @@ class RequestDtoResolverTest extends TestCase
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
 
-        /** @var TestDto $dto */
         $dto = $generator->current();
         self::assertInstanceOf(TestDto::class, $dto);
         self::assertEquals(5, $dto->getInt());
@@ -360,7 +355,6 @@ class RequestDtoResolverTest extends TestCase
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
 
-        /** @var RouteParameterDto $dto */
         $dto = $generator->current();
         self::assertInstanceOf(RouteParameterDto::class, $dto);
         self::assertEquals(5, $dto->getInt());
@@ -386,7 +380,6 @@ class RequestDtoResolverTest extends TestCase
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
 
-        /** @var RouteParameterDto $dto */
         $dto = $generator->current();
         self::assertInstanceOf(RouteParameterDto::class, $dto);
         self::assertEquals(5, $dto->getInt());
@@ -429,7 +422,6 @@ class RequestDtoResolverTest extends TestCase
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
 
-        /** @var EmptyDto $dto */
         $dto = $generator->current();
         self::assertInstanceOf(EmptyDto::class, $dto);
     }

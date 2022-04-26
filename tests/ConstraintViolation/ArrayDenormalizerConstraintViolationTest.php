@@ -43,8 +43,8 @@ class ArrayDenormalizerConstraintViolationTest extends TestCase
             $error = $ex;
         }
 
-        self::assertInstanceOf(InvalidArgumentException::class, $error);
         self::assertNotNull($error);
+        self::assertInstanceOf(InvalidArgumentException::class, $error);
 
         $constraintViolation = new ArrayDenormalizerConstraintViolation($error, $data, ArrayDto::class);
 

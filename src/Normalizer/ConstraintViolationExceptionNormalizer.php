@@ -26,14 +26,15 @@ final class ConstraintViolationExceptionNormalizer implements NormalizerInterfac
     }
 
     /**
-     * @param ConstraintViolationException $object
-     * @param array<mixed>                 $context
+     * @param array<mixed> $context
      *
      * @return array<string, mixed>
      */
-    public function normalize($object, string $format = null, array $context = []): array
+    public function normalize(mixed $object, string $format = null, array $context = []): array
     {
-        $constraintViolationList = $object->getConstraintViolationList();
+        /** @var ConstraintViolationException $exception */
+        $exception = $object;
+        $constraintViolationList = $exception->getConstraintViolationList();
         $normalized = $this->constraintViolationListNormalizer->normalize($constraintViolationList, $format, $context);
 
         if (!isset($normalized['violations'])) {
@@ -50,7 +51,7 @@ final class ConstraintViolationExceptionNormalizer implements NormalizerInterfac
                     $constraint = $violation->getConstraint();
                     $code = $violation->getCode();
 
-                    if ($constraint && $code) {
+                    if (null !== $constraint && null !== $code) {
                         /** @var class-string<\Symfony\Component\Validator\Constraint> $constraintClass */
                         $constraintClass = $constraint::class;
                         $normalized['violations'][$index]['errorName'] = $constraintClass::getErrorName($code);
@@ -69,6 +70,6 @@ final class ConstraintViolationExceptionNormalizer implements NormalizerInterfac
 
     public function hasCacheableSupportsMethod(): bool
     {
-        return __CLASS__ === ConstraintViolationExceptionNormalizer::class;
+        return true;
     }
 }

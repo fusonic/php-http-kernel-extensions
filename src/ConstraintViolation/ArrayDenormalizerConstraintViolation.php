@@ -75,14 +75,14 @@ class ArrayDenormalizerConstraintViolation extends ConstraintViolation
         $class = new ReflectionClass($className);
 
         $constructor = $class->getConstructor();
-        $parameters = $constructor?->getParameters() ?: [];
+        $parameters = $constructor?->getParameters() ?? [];
 
         foreach ($parameters as $parameter) {
             $parameterName = $parameter->getName();
             /** @var ReflectionNamedType|null $reflectionType */
             $reflectionType = $parameter->getType();
 
-            if (!$parameter->isOptional() && $reflectionType && 'array' === $reflectionType->getName()) {
+            if (!$parameter->isOptional() && null !== $reflectionType && 'array' === $reflectionType->getName()) {
                 $parameterValue = $data[$parameterName] ?? null;
 
                 if (null === $parameterValue) {

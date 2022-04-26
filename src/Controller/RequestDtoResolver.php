@@ -12,6 +12,7 @@ use Fusonic\HttpKernelExtensions\ErrorHandler\ConstraintViolationErrorHandler;
 use Fusonic\HttpKernelExtensions\ErrorHandler\ErrorHandlerInterface;
 use Fusonic\HttpKernelExtensions\Provider\ContextAwareProviderInterface;
 use Generator;
+use InvalidArgumentException;
 use ReflectionAttribute;
 use ReflectionClass;
 use Symfony\Component\HttpFoundation\Request;
@@ -37,7 +38,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
     /**
      * @var ContextAwareProviderInterface[]
      */
-    private iterable $providers;
+    private array $providers = [];
     private ErrorHandlerInterface $errorHandler;
 
     public function __construct(
@@ -47,7 +48,14 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         iterable $providers = []
     ) {
         $this->errorHandler = $errorHandler ?? new ConstraintViolationErrorHandler();
-        $this->providers = $providers;
+
+        foreach ($providers as $provider) {
+            if ($provider instanceof ContextAwareProviderInterface) {
+                $this->providers[] = $provider;
+            } else {
+                throw new InvalidArgumentException(sprintf('Given $providers must be instance of `%s`.', ContextAwareProviderInterface::class));
+            }
+        }
     }
 
     public function supports(Request $request, ArgumentMetadata $argument): bool
@@ -58,7 +66,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
     public function resolve(Request $request, ArgumentMetadata $argument): Generator
     {
         if (!$this->isSupportedArgument($argument)) {
-            throw new \LogicException('The parameter has to have the attribute .'.FromRequest::class.'! This should have been check in the supports function!');
+            throw new InvalidArgumentException('The parameter has to have the attribute .'.FromRequest::class.'! This should have been checked in the supports function!');
         }
 
         $routeParameters = $this->getRouteParams($request);
@@ -88,7 +96,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
     private function applyProviders(object $dto): void
     {
         foreach ($this->providers as $provider) {
-            if ($provider instanceof ContextAwareProviderInterface && $provider->supports($dto)) {
+            if ($provider->supports($dto)) {
                 $provider->provide($dto);
             }
         }
@@ -102,7 +110,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         }
 
         // attribute via parameter
-        if ($argument->getAttributes(FromRequest::class)) {
+        if (count($argument->getAttributes(FromRequest::class)) > 0) {
             return true;
         }
 
@@ -116,7 +124,8 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
     private function getRequestContent(Request $request): array
     {
         $content = $request->getContent();
-        if (!is_string($content) || '' === $content) {
+
+        if ('' === $content) {
             return [];
         }
 
@@ -158,7 +167,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
     private function denormalize(array $data, string $class, array $options): object
     {
         try {
-            if ($data) {
+            if (count($data) > 0) {
                 $dto = $this->serializer->denormalize($data, $class, JsonEncoder::FORMAT, $options);
             } else {
                 $dto = new $class();
