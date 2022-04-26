@@ -1,9 +1,9 @@
 # http-kernel-extensions
 
-[![License](https://img.shields.io/packagist/l/fusonic/http-kernel-extensions?color=blue)](https://github.com/fusonic/http-kernel-extensions/blob/master/LICENSE)
-[![Latest Version](https://img.shields.io/github/tag/fusonic/http-kernel-extensions.svg?color=blue)](https://github.com/fusonic/http-kernel-extensions/releases)
+[![License](https://img.shields.io/packagist/l/fusonic/http-kernel-extensions?color=blue)](https://github.com/fusonic/php-http-kernel-extensions/blob/master/LICENSE)
+[![Latest Version](https://img.shields.io/github/tag/fusonic/php-http-kernel-extensions.svg?color=blue)](https://github.com/fusonic/php-http-kernel-extensions/releases)
 [![Total Downloads](https://img.shields.io/packagist/dt/fusonic/http-kernel-extensions.svg?color=blue)](https://packagist.org/packages/fusonic/http-kernel-extensions)
-[![php 7.4+](https://img.shields.io/badge/php-min%207.4-blue.svg)](https://gitlab.com/fusonic/devops/php/extensions/-/blob/12-open-source-preparations/packages/http-kernel-extensions/composer.json)
+![php 7.4+](https://img.shields.io/badge/php-min%207.4-blue.svg)
 
 * [About](#about)
 * [Install](#install)
