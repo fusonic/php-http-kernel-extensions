@@ -69,7 +69,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
             throw new InvalidArgumentException('The parameter has to have the attribute .'.FromRequest::class.'! This should have been checked in the supports function!');
         }
 
-        $routeParameters = $this->getRouteParams($request);
+        $routeParameters = $request->attributes->get('_route_params', []);
 
         if (in_array($request->getMethod(), self::METHODS_WITH_STRICT_TYPE_CHECKS, true)) {
             $options = [];
@@ -145,18 +145,6 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
     private function getRequestQueries(Request $request): array
     {
         return $request->query->all();
-    }
-
-    private function getRouteParams(Request $request): array
-    {
-        $params = $request->attributes->get('_route_params', []);
-
-        foreach ($params as $key => $param) {
-            $value = filter_var($param, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
-            $params[$key] = $value ?? $param;
-        }
-
-        return $params;
     }
 
     /**

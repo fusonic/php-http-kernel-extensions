@@ -357,10 +357,10 @@ class RequestDtoResolverTest extends TestCase
 
         $dto = $generator->current();
         self::assertInstanceOf(RouteParameterDto::class, $dto);
-        self::assertEquals(5, $dto->getInt());
-        self::assertEquals(9.99, $dto->getFloat());
-        self::assertEquals('foobar', $dto->getString());
-        self::assertEquals(true, $dto->isBool());
+        self::assertSame(5, $dto->getInt());
+        self::assertSame('9.99', $dto->getFloat());
+        self::assertSame('foobar', $dto->getString());
+        self::assertSame(1, $dto->isBool());
     }
 
     public function testRouteParameterHandlingWithStrings(): void
@@ -382,10 +382,10 @@ class RequestDtoResolverTest extends TestCase
 
         $dto = $generator->current();
         self::assertInstanceOf(RouteParameterDto::class, $dto);
-        self::assertEquals(5, $dto->getInt());
-        self::assertEquals(9.99, $dto->getFloat());
-        self::assertEquals('foobar', $dto->getString());
-        self::assertEquals(true, $dto->isBool());
+        self::assertSame(5, $dto->getInt());
+        self::assertSame('9.99', $dto->getFloat());
+        self::assertSame('foobar', $dto->getString());
+        self::assertSame(1, $dto->isBool());
     }
 
     public function testInvalidTypeMappingHandling(): void
