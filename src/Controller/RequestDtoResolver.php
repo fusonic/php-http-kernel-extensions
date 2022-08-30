@@ -45,7 +45,15 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         private DenormalizerInterface $serializer,
         private ValidatorInterface $validator,
         ?ErrorHandlerInterface $errorHandler = null,
-        iterable $providers = []
+        iterable $providers = [],
+
+        /**
+         * Whether to force values from route params to be converted to integers if they look like integers.
+         *
+         *   Example: if you route contains '1' as a value for a parameter and you intended it to be a string,
+         *   you should set this option to 'false'.
+         */
+        private bool $forceRouteParamsIntegers = true
     ) {
         $this->errorHandler = $errorHandler ?? new ConstraintViolationErrorHandler();
 
@@ -69,7 +77,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
             throw new InvalidArgumentException('The parameter has to have the attribute .'.FromRequest::class.'! This should have been checked in the supports function!');
         }
 
-        $routeParameters = $request->attributes->get('_route_params', []);
+        $routeParameters = $this->getRouteParams($request);
 
         if (in_array($request->getMethod(), self::METHODS_WITH_STRICT_TYPE_CHECKS, true)) {
             $options = [];
@@ -140,6 +148,20 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         }
 
         return $data;
+    }
+
+    private function getRouteParams(Request $request): array
+    {
+        $params = $request->attributes->get('_route_params', []);
+
+        if ($this->forceRouteParamsIntegers) {
+            foreach ($params as $key => $param) {
+                $value = filter_var($param, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
+                $params[$key] = $value ?? $param;
+            }
+        }
+
+        return $params;
     }
 
     private function getRequestQueries(Request $request): array
