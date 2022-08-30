@@ -9,7 +9,6 @@ namespace Fusonic\HttpKernelExtensions\Tests\Controller;
 
 use Fusonic\HttpKernelExtensions\Attribute\FromRequest;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\ArgumentCountConstraintViolation;
-use Fusonic\HttpKernelExtensions\ConstraintViolation\ArrayDenormalizerConstraintViolation;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\MissingConstructorArgumentsConstraintViolation;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\NotNormalizableValueConstraintViolation;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\TypeConstraintViolation;
@@ -594,7 +593,7 @@ class RequestDtoResolverTest extends TestCase
             [
                 ['requiredArgument' => 1, 'items' => null],
                 ArrayDto::class,
-                ArrayDenormalizerConstraintViolation::class,
+                NotNormalizableValueConstraintViolation::class,
             ],
             [
                 ['items' => null],
