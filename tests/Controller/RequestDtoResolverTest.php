@@ -535,6 +535,23 @@ class RequestDtoResolverTest extends TestCase
         $generator->current();
     }
 
+    public function testValidIntegerRouteParameter(): void
+    {
+        $request = new Request([], ['requiredArgument' => 1]);
+        $request->setMethod(Request::METHOD_POST);
+
+        $argument = $this->createArgumentMetadata(DummyClassA::class, [new FromRequest()]);
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator(), null, [], false);
+        self::assertTrue($resolver->supports($request, $argument));
+        $generator = $resolver->resolve($request, $argument);
+
+        /* @var DummyClassA $dto */
+        $dto = $generator->current();
+
+        self::assertSame(1, $dto->getRequiredArgument());
+    }
+
     public function testInvalidValueForNotForcingRouteParamIntegers(): void
     {
         $request = new Request([], [], ['_route_params' => ['id' => 1]]);
