@@ -1,7 +1,7 @@
 {
     "name": "fusonic/http-kernel-extensions",
     "license": "MIT",
-    "version": "5.1.3",
+    "version": "5.1.4",
     "description": "Symfony HttpKernel Component Extensions.",
     "type": "library",
     "authors": [
@@ -23,7 +23,7 @@
     "require": {
         "php": ">=8.0",
         "symfony/http-kernel": "^5.4|^6.0",
-        "symfony/serializer": "^5.4|^6.0",
+        "symfony/serializer": "^5.4.12|^6.0",
         "symfony/validator": "^5.4|^6.0",
         "symfony/property-info": "^5.4|^6.0",
         "symfony/property-access": "^5.4|^6.0",

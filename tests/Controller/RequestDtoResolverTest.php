@@ -9,7 +9,6 @@ namespace Fusonic\HttpKernelExtensions\Tests\Controller;
 
 use Fusonic\HttpKernelExtensions\Attribute\FromRequest;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\ArgumentCountConstraintViolation;
-use Fusonic\HttpKernelExtensions\ConstraintViolation\ArrayDenormalizerConstraintViolation;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\MissingConstructorArgumentsConstraintViolation;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\NotNormalizableValueConstraintViolation;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\TypeConstraintViolation;
@@ -26,6 +25,7 @@ use Fusonic\HttpKernelExtensions\Tests\Dto\NestedDto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\NotADto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\QueryDtoWithAttribute;
 use Fusonic\HttpKernelExtensions\Tests\Dto\RouteParameterDto;
+use Fusonic\HttpKernelExtensions\Tests\Dto\StringIdDto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\TestDto;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -518,6 +518,77 @@ class RequestDtoResolverTest extends TestCase
         self::assertInstanceOf(TypeConstraintViolation::class, $violations->get(0));
     }
 
+    public function testIntegerRouteParameterTypeError(): void
+    {
+        $request = new Request([], ['requiredArgument' => '1']);
+        $request->setMethod(Request::METHOD_POST);
+
+        $argument = $this->createArgumentMetadata(DummyClassA::class, [new FromRequest()]);
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator(), null, [], false);
+        self::assertTrue($resolver->supports($request, $argument));
+        $generator = $resolver->resolve($request, $argument);
+
+        self::expectExceptionMessage('ConstraintViolation: This value should be of type int.');
+
+        /* @var DummyClassA $dto */
+        $generator->current();
+    }
+
+    public function testValidIntegerRouteParameter(): void
+    {
+        $request = new Request([], ['requiredArgument' => 1]);
+        $request->setMethod(Request::METHOD_POST);
+
+        $argument = $this->createArgumentMetadata(DummyClassA::class, [new FromRequest()]);
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator(), null, [], false);
+        self::assertTrue($resolver->supports($request, $argument));
+        $generator = $resolver->resolve($request, $argument);
+
+        /* @var DummyClassA $dto */
+        $dto = $generator->current();
+
+        self::assertSame(1, $dto->getRequiredArgument());
+    }
+
+    public function testInvalidValueForNotForcingRouteParamIntegers(): void
+    {
+        $request = new Request([], [], ['_route_params' => ['id' => 1]]);
+        $request->setMethod(Request::METHOD_POST);
+        $argument = $this->createArgumentMetadata(StringIdDto::class, [new FromRequest()]);
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator(), null, [], false);
+        self::assertTrue($resolver->supports($request, $argument));
+
+        $this->expectException(ConstraintViolationException::class);
+        $iterable = $resolver->resolve($request, $argument);
+
+        $this->expectException(ConstraintViolationException::class);
+        $this->expectExceptionMessage(
+            'ConstraintViolation: This value should be of type string.'
+        );
+
+        $iterable->current();
+    }
+
+    public function testValidValueForNotForcingRouteParamIntegers(): void
+    {
+        $request = new Request([], [], ['_route_params' => ['id' => '1']]);
+        $request->setMethod(Request::METHOD_POST);
+        $argument = $this->createArgumentMetadata(StringIdDto::class, [new FromRequest()]);
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator(), null, [], false);
+        self::assertTrue($resolver->supports($request, $argument));
+
+        $iterable = $resolver->resolve($request, $argument);
+
+        $dto = $iterable->current();
+
+        self::assertInstanceOf(StringIdDto::class, $dto);
+        self::assertSame('1', $dto->id);
+    }
+
     public function errorTestData(): array
     {
         return [
@@ -539,7 +610,7 @@ class RequestDtoResolverTest extends TestCase
             [
                 ['requiredArgument' => 1, 'items' => null],
                 ArrayDto::class,
-                ArrayDenormalizerConstraintViolation::class,
+                NotNormalizableValueConstraintViolation::class,
             ],
             [
                 ['items' => null],
