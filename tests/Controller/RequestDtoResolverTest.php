@@ -16,6 +16,7 @@ use Fusonic\HttpKernelExtensions\Controller\RequestDtoResolver;
 use Fusonic\HttpKernelExtensions\Exception\ConstraintViolationException;
 use Fusonic\HttpKernelExtensions\Normalizer\ConstraintViolationExceptionNormalizer;
 use Fusonic\HttpKernelExtensions\Provider\ContextAwareProviderInterface;
+use Fusonic\HttpKernelExtensions\Request\StrictRequestDataCollector;
 use Fusonic\HttpKernelExtensions\Tests\Dto\ArrayDto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\ClassDtoWithAttribute;
 use Fusonic\HttpKernelExtensions\Tests\Dto\DummyClassA;
@@ -525,7 +526,13 @@ class RequestDtoResolverTest extends TestCase
 
         $argument = $this->createArgumentMetadata(DummyClassA::class, [new FromRequest()]);
 
-        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator(), null, [], false);
+        $resolver = new RequestDtoResolver(
+            $this->getDenormalizer(),
+            $this->getValidator(),
+            null,
+            [],
+            new StrictRequestDataCollector(false)
+        );
         self::assertTrue($resolver->supports($request, $argument));
         $generator = $resolver->resolve($request, $argument);
 
@@ -542,7 +549,13 @@ class RequestDtoResolverTest extends TestCase
 
         $argument = $this->createArgumentMetadata(DummyClassA::class, [new FromRequest()]);
 
-        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator(), null, [], false);
+        $resolver = new RequestDtoResolver(
+            $this->getDenormalizer(),
+            $this->getValidator(),
+            null,
+            [],
+            new StrictRequestDataCollector(false)
+        );
         self::assertTrue($resolver->supports($request, $argument));
         $generator = $resolver->resolve($request, $argument);
 
@@ -558,7 +571,13 @@ class RequestDtoResolverTest extends TestCase
         $request->setMethod(Request::METHOD_POST);
         $argument = $this->createArgumentMetadata(StringIdDto::class, [new FromRequest()]);
 
-        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator(), null, [], false);
+        $resolver = new RequestDtoResolver(
+            $this->getDenormalizer(),
+            $this->getValidator(),
+            null,
+            [],
+            new StrictRequestDataCollector(false)
+        );
         self::assertTrue($resolver->supports($request, $argument));
 
         $this->expectException(ConstraintViolationException::class);
@@ -578,7 +597,14 @@ class RequestDtoResolverTest extends TestCase
         $request->setMethod(Request::METHOD_POST);
         $argument = $this->createArgumentMetadata(StringIdDto::class, [new FromRequest()]);
 
-        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator(), null, [], false);
+        $resolver = new RequestDtoResolver(
+            $this->getDenormalizer(),
+            $this->getValidator(),
+            null,
+            [],
+            new StrictRequestDataCollector(false)
+        );
+
         self::assertTrue($resolver->supports($request, $argument));
 
         $iterable = $resolver->resolve($request, $argument);

@@ -20,14 +20,10 @@ use Symfony\Component\Validator\ConstraintViolationListInterface;
  */
 class ConstraintViolationException extends RuntimeException
 {
-    private ConstraintViolationListInterface $constraintViolationList;
-
     public const NAME = 'ConstraintViolation';
 
-    public function __construct(ConstraintViolationListInterface $constraintViolationList)
+    public function __construct(private readonly ConstraintViolationListInterface $constraintViolationList)
     {
-        $this->constraintViolationList = $constraintViolationList;
-
         $messages = [];
 
         /** @var ConstraintViolation $constraintViolation */

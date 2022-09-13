@@ -20,7 +20,7 @@ use Symfony\Component\Validator\ConstraintViolation;
 final class ConstraintViolationExceptionNormalizer implements NormalizerInterface, CacheableSupportsMethodInterface
 {
     public function __construct(
-        private NormalizerInterface $normalizer
+        private readonly NormalizerInterface $normalizer
     ) {
     }
 

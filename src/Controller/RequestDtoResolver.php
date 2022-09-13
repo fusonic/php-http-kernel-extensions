@@ -11,6 +11,8 @@ use Fusonic\HttpKernelExtensions\Attribute\FromRequest;
 use Fusonic\HttpKernelExtensions\ErrorHandler\ConstraintViolationErrorHandler;
 use Fusonic\HttpKernelExtensions\ErrorHandler\ErrorHandlerInterface;
 use Fusonic\HttpKernelExtensions\Provider\ContextAwareProviderInterface;
+use Fusonic\HttpKernelExtensions\Request\RequestDataCollectorInterface;
+use Fusonic\HttpKernelExtensions\Request\StrictRequestDataCollector;
 use Generator;
 use InvalidArgumentException;
 use ReflectionAttribute;
@@ -18,7 +20,6 @@ use ReflectionClass;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ArgumentValueResolverInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -27,8 +28,7 @@ use Throwable;
 
 final class RequestDtoResolver implements ArgumentValueResolverInterface
 {
-    private const MAX_JSON_DEPTH = 512;
-    private const METHODS_WITH_STRICT_TYPE_CHECKS = [
+    public const METHODS_WITH_STRICT_TYPE_CHECKS = [
         Request::METHOD_PUT,
         Request::METHOD_POST,
         Request::METHOD_DELETE,
@@ -40,22 +40,17 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
      */
     private array $providers = [];
     private ErrorHandlerInterface $errorHandler;
+    private RequestDataCollectorInterface $modelDataParser;
 
     public function __construct(
-        private DenormalizerInterface $serializer,
-        private ValidatorInterface $validator,
+        private readonly DenormalizerInterface $serializer,
+        private readonly ValidatorInterface $validator,
         ?ErrorHandlerInterface $errorHandler = null,
         iterable $providers = [],
-
-        /**
-         * Whether to force values from route params to be converted to integers if they look like integers.
-         *
-         *   Example: if you route contains '1' as a value for a parameter and you intended it to be a string,
-         *   you should set this option to 'false'.
-         */
-        private bool $forceRouteParamsIntegers = true
+        ?RequestDataCollectorInterface $modelDataParser = null,
     ) {
         $this->errorHandler = $errorHandler ?? new ConstraintViolationErrorHandler();
+        $this->modelDataParser = $modelDataParser ?? new StrictRequestDataCollector();
 
         foreach ($providers as $provider) {
             if ($provider instanceof ContextAwareProviderInterface) {
@@ -77,19 +72,12 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
             throw new InvalidArgumentException('The parameter has to have the attribute .'.FromRequest::class.'! This should have been checked in the supports function!');
         }
 
-        $routeParameters = $this->getRouteParams($request);
+        $data = $this->modelDataParser->collect($request);
 
         if (in_array($request->getMethod(), self::METHODS_WITH_STRICT_TYPE_CHECKS, true)) {
             $options = [];
-
-            if ('json' === $request->getContentType()) {
-                $data = $this->mergeRequestData($this->getRequestContent($request), $routeParameters);
-            } else {
-                $data = $this->mergeRequestData($request->request->all(), $routeParameters);
-            }
         } else {
             $options = [AbstractObjectNormalizer::DISABLE_TYPE_ENFORCEMENT => true];
-            $data = $this->mergeRequestData($this->getRequestQueries($request), $routeParameters);
         }
 
         /** @var class-string $className */
@@ -129,46 +117,6 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         return count($attributes) > 0;
     }
 
-    private function getRequestContent(Request $request): array
-    {
-        $content = $request->getContent();
-
-        if ('' === $content) {
-            return [];
-        }
-
-        try {
-            $data = json_decode($content, true, self::MAX_JSON_DEPTH, JSON_THROW_ON_ERROR);
-        } catch (\JsonException $ex) {
-            throw new BadRequestHttpException('The request body seems to contain invalid json!', $ex);
-        }
-
-        if (null === $data) {
-            throw new BadRequestHttpException('The request body could not be decoded or has too many hierarchy levels (max '.self::MAX_JSON_DEPTH.')!');
-        }
-
-        return $data;
-    }
-
-    private function getRouteParams(Request $request): array
-    {
-        $params = $request->attributes->get('_route_params', []);
-
-        if ($this->forceRouteParamsIntegers) {
-            foreach ($params as $key => $param) {
-                $value = filter_var($param, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
-                $params[$key] = $value ?? $param;
-            }
-        }
-
-        return $params;
-    }
-
-    private function getRequestQueries(Request $request): array
-    {
-        return $request->query->all();
-    }
-
     /**
      * @param array<mixed>         $data
      * @param class-string         $class
@@ -195,20 +143,5 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         if ($violations->count() > 0) {
             $this->errorHandler->handleConstraintViolations($violations);
         }
-    }
-
-    /**
-     * @param array<mixed>         $data
-     * @param array<string, mixed> $routeParameters
-     *
-     * @return array<string, mixed>
-     */
-    private function mergeRequestData(array $data, array $routeParameters): array
-    {
-        if (count($keys = array_intersect_key($data, $routeParameters)) > 0) {
-            throw new BadRequestHttpException(sprintf('Parameters (%s) used as route attributes can not be used in the request body or query parameters.', implode(', ', array_keys($keys))));
-        }
-
-        return array_merge($data, $routeParameters);
     }
 }

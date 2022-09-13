@@ -187,6 +187,13 @@ final class FooController extends AbstractController
 }
 ```
 
+#### Parsing and collecting data for models
+By default, any `json` or `form` request body types will be parsed accordingly. To override this behaviour you could
+inject your own request body parsers (by implementing `Fusonic\HttpKernelExtensions\Request\BodyParser\RequestBodyParserInterface`)
+into an implementation of `Fusonic\HttpKernelExtensions\Request\RequestDataCollectorInterface`, which is injected into the
+`Fusonic\HttpKernelExtensions\Controller\RequestDtoResolver`. Inside the `RequestDataCollectorInterface` you can
+also modify the behaviour of how and which values are used from the `Request` object.
+
 #### Error handling
 
 The extension provides a default error handler (`http-kernel-extensions/src/ErrorHandler/ConstraintViolationErrorHandler.php`) which
