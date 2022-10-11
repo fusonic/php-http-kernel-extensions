@@ -31,6 +31,8 @@ class NormalizerTest extends TestCase
 
         $exception = new ConstraintViolationException($violations);
 
+        self::assertTrue($normalizer->supportsNormalization($exception));
+        self::assertTrue($normalizer->hasCacheableSupportsMethod());
         $result = $normalizer->normalize($exception);
 
         self::assertSame('ConstraintViolation: This value is too short. It should have 10 characters or more.', $exception->getMessage());

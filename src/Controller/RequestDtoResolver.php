@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace Fusonic\HttpKernelExtensions\Controller;
 
 use Fusonic\HttpKernelExtensions\Attribute\FromRequest;
+use Fusonic\HttpKernelExtensions\Cache\ReflectionClassCache;
 use Fusonic\HttpKernelExtensions\ErrorHandler\ConstraintViolationErrorHandler;
 use Fusonic\HttpKernelExtensions\ErrorHandler\ErrorHandlerInterface;
 use Fusonic\HttpKernelExtensions\Provider\ContextAwareProviderInterface;
@@ -67,7 +68,10 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
             throw new \InvalidArgumentException('The parameter has to have the attribute .'.FromRequest::class.'! This should have been checked in the supports function!');
         }
 
-        $data = $this->modelDataParser->collect($request);
+        /** @var class-string $className */
+        $className = $argument->getType();
+
+        $data = $this->modelDataParser->collect($request, $className);
 
         if (in_array($request->getMethod(), self::METHODS_WITH_STRICT_TYPE_CHECKS, true)) {
             $options = [];
@@ -75,8 +79,6 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
             $options = [AbstractObjectNormalizer::DISABLE_TYPE_ENFORCEMENT => true];
         }
 
-        /** @var class-string $className */
-        $className = $argument->getType();
         $dto = $this->denormalize($data, $className, $options);
         $this->applyProviders($dto);
         $this->validate($dto);
@@ -106,7 +108,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         }
 
         // attribute via class
-        $class = new \ReflectionClass($argument->getType());
+        $class = ReflectionClassCache::getReflectionClass($argument->getType());
         $attributes = $class->getAttributes(FromRequest::class, \ReflectionAttribute::IS_INSTANCEOF);
 
         return count($attributes) > 0;

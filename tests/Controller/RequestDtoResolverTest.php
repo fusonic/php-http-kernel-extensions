@@ -26,7 +26,6 @@ use Fusonic\HttpKernelExtensions\Tests\Dto\NestedDto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\NotADto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\QueryDtoWithAttribute;
 use Fusonic\HttpKernelExtensions\Tests\Dto\RouteParameterDto;
-use Fusonic\HttpKernelExtensions\Tests\Dto\StringIdDto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\TestDto;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -530,7 +529,7 @@ class RequestDtoResolverTest extends TestCase
             $this->getValidator(),
             null,
             [],
-            new StrictRequestDataCollector(false)
+            new StrictRequestDataCollector(null)
         );
         self::assertTrue($resolver->supports($request, $argument));
         $generator = $resolver->resolve($request, $argument);
@@ -553,7 +552,7 @@ class RequestDtoResolverTest extends TestCase
             $this->getValidator(),
             null,
             [],
-            new StrictRequestDataCollector(false)
+            new StrictRequestDataCollector(null)
         );
         self::assertTrue($resolver->supports($request, $argument));
         $generator = $resolver->resolve($request, $argument);
@@ -562,56 +561,6 @@ class RequestDtoResolverTest extends TestCase
         $dto = $generator->current();
 
         self::assertSame(1, $dto->getRequiredArgument());
-    }
-
-    public function testInvalidValueForNotForcingRouteParamIntegers(): void
-    {
-        $request = new Request([], [], ['_route_params' => ['id' => 1]]);
-        $request->setMethod(Request::METHOD_POST);
-        $argument = $this->createArgumentMetadata(StringIdDto::class, [new FromRequest()]);
-
-        $resolver = new RequestDtoResolver(
-            $this->getDenormalizer(),
-            $this->getValidator(),
-            null,
-            [],
-            new StrictRequestDataCollector(false)
-        );
-        self::assertTrue($resolver->supports($request, $argument));
-
-        $this->expectException(ConstraintViolationException::class);
-        $iterable = $resolver->resolve($request, $argument);
-
-        $this->expectException(ConstraintViolationException::class);
-        $this->expectExceptionMessage(
-            'ConstraintViolation: This value should be of type string.'
-        );
-
-        $iterable->current();
-    }
-
-    public function testValidValueForNotForcingRouteParamIntegers(): void
-    {
-        $request = new Request([], [], ['_route_params' => ['id' => '1']]);
-        $request->setMethod(Request::METHOD_POST);
-        $argument = $this->createArgumentMetadata(StringIdDto::class, [new FromRequest()]);
-
-        $resolver = new RequestDtoResolver(
-            $this->getDenormalizer(),
-            $this->getValidator(),
-            null,
-            [],
-            new StrictRequestDataCollector(false)
-        );
-
-        self::assertTrue($resolver->supports($request, $argument));
-
-        $iterable = $resolver->resolve($request, $argument);
-
-        $dto = $iterable->current();
-
-        self::assertInstanceOf(StringIdDto::class, $dto);
-        self::assertSame('1', $dto->id);
     }
 
     public function errorTestData(): array

@@ -15,7 +15,9 @@ use Symfony\Component\HttpFoundation\Request;
 interface RequestDataCollectorInterface
 {
     /**
+     * @param class-string $className
+     *
      * @return array<mixed>
      */
-    public function collect(Request $request): array;
+    public function collect(Request $request, string $className): array;
 }

@@ -7,10 +7,13 @@ declare(strict_types=1);
 
 namespace Fusonic\HttpKernelExtensions\Request;
 
+use Fusonic\HttpKernelExtensions\Cache\ReflectionClassCache;
 use Fusonic\HttpKernelExtensions\Controller\RequestDtoResolver;
 use Fusonic\HttpKernelExtensions\Request\BodyParser\FormRequestBodyParser;
 use Fusonic\HttpKernelExtensions\Request\BodyParser\JsonRequestBodyParser;
 use Fusonic\HttpKernelExtensions\Request\BodyParser\RequestBodyParserInterface;
+use Fusonic\HttpKernelExtensions\Request\UrlParser\FilterVarUrlParser;
+use Fusonic\HttpKernelExtensions\Request\UrlParser\UrlParserInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
@@ -21,20 +24,18 @@ class StrictRequestDataCollector implements RequestDataCollectorInterface
      */
     private readonly array $requestBodyParsers;
 
+    private readonly UrlParserInterface $urlParser;
+
     public function __construct(
-        /**
-         * Whether to force values from route params to be converted to integers if they look like integers.
-         *
-         *   Example: if you route contains '1' as a value for a parameter, and you intended it to be a string,
-         *   you should set this option to 'false'.
-         */
-        private readonly bool $forceRouteParamsIntegers = true,
+        ?UrlParserInterface $urlParser = null,
 
         /*
          * @var array<string, RequestBodyParserInterface>|null
          */
         ?array $requestBodyParsers = null,
     ) {
+        $this->urlParser = $urlParser ?? new FilterVarUrlParser();
+
         $this->requestBodyParsers = $requestBodyParsers ?? [
             'json' => new JsonRequestBodyParser(),
             'default' => new FormRequestBodyParser(),
@@ -44,29 +45,15 @@ class StrictRequestDataCollector implements RequestDataCollectorInterface
     /**
      * {@inheritDoc}
      */
-    public function collect(Request $request): array
+    public function collect(Request $request, string $className): array
     {
-        $routeParameters = $this->getRouteParams($request);
+        $routeParameters = $this->parseProperties($request->attributes->get('_route_params', []), $className);
 
         if (in_array($request->getMethod(), RequestDtoResolver::METHODS_WITH_STRICT_TYPE_CHECKS, true)) {
             return $this->mergeRequestData($this->parseRequestBody($request), $routeParameters);
         }
 
-        return $this->mergeRequestData($request->query->all(), $routeParameters);
-    }
-
-    protected function getRouteParams(Request $request): array
-    {
-        $params = $request->attributes->get('_route_params', []);
-
-        if ($this->forceRouteParamsIntegers) {
-            foreach ($params as $key => $param) {
-                $value = filter_var($param, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
-                $params[$key] = $value ?? $param;
-            }
-        }
-
-        return $params;
+        return $this->mergeRequestData($this->parseProperties($request->query->all(), $className), $routeParameters);
     }
 
     /**
@@ -96,5 +83,42 @@ class StrictRequestDataCollector implements RequestDataCollectorInterface
         }
 
         return $requestBodyParser->parse($request);
+    }
+
+    /**
+     * Parse the string properties of the appropriate types based on the types in the class. Since route parameters
+     * and query parameters always come in as strings.
+     *
+     * @param array<string, mixed> $params
+     *
+     * @return array<string, mixed>
+     */
+    private function parseProperties(array $params, string $className): array
+    {
+        $reflectionClass = ReflectionClassCache::getReflectionClass($className);
+
+        foreach ($params as $key => $param) {
+            if (!$reflectionClass->hasProperty($key)) {
+                throw new \LogicException(sprintf('Property `%s` does not exist on class `%s`.', $key, $className));
+            }
+
+            if (is_string($param)) {
+                $property = $reflectionClass->getProperty($key);
+                /** @var \ReflectionNamedType|null $propertyType */
+                $propertyType = $property->getType();
+                $type = $propertyType?->getName();
+
+                if (null !== $type) {
+                    $params[$key] = match ($type) {
+                        'int' => $this->urlParser->parseInteger($param),
+                        'float' => $this->urlParser->parseFloat($param),
+                        'bool' => $this->urlParser->parseBoolean($param),
+                        default => $this->urlParser->parseString($param)
+                    };
+                }
+            }
+        }
+
+        return $params;
     }
 }
