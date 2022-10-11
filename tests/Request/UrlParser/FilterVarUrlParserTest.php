@@ -19,16 +19,16 @@ class FilterVarUrlParserTest extends TestCase
         self::assertSame('test', $urlParser->parseString('test'));
         self::assertSame(1, $urlParser->parseInteger('1'));
         self::assertSame(-1, $urlParser->parseInteger('-1'));
-        self::assertSame(true, $urlParser->parseBoolean('true'));
-        self::assertSame(true, $urlParser->parseBoolean('On'));
-        self::assertSame(true, $urlParser->parseBoolean('1'));
-        self::assertSame(false, $urlParser->parseBoolean('0'));
+        self::assertTrue($urlParser->parseBoolean('true'));
+        self::assertTrue($urlParser->parseBoolean('On'));
+        self::assertTrue($urlParser->parseBoolean('1'));
+        self::assertFalse($urlParser->parseBoolean('0'));
         self::assertSame(0.0, $urlParser->parseFloat('0'));
         self::assertSame(1.11, $urlParser->parseFloat('1.11'));
 
         // Test invalid values
-        self::assertSame(null, $urlParser->parseInteger('test'));
-        self::assertSame(null, $urlParser->parseFloat('test'));
-        self::assertSame(null, $urlParser->parseBoolean('99'));
+        self::assertNull($urlParser->parseInteger('test'));
+        self::assertNull($urlParser->parseFloat('test'));
+        self::assertNull($urlParser->parseBoolean('99'));
     }
 }
