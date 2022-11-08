@@ -15,7 +15,7 @@ use Symfony\Component\Validator\ConstraintViolation;
 /**
  * Wraps a {@see ArgumentCountError} into a {@see ConstraintViolation}.
  */
-class ArgumentCountConstraintViolation extends ConstraintViolation
+final class ArgumentCountConstraintViolation extends ConstraintViolation
 {
     private const EXPECTED_MATCHES = 6;
 

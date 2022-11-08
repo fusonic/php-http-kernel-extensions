@@ -10,7 +10,7 @@ namespace Fusonic\HttpKernelExtensions\Request\BodyParser;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
-class JsonRequestBodyParser implements RequestBodyParserInterface
+final class JsonRequestBodyParser implements RequestBodyParserInterface
 {
     public function __construct(
         /**

@@ -16,7 +16,7 @@ use Symfony\Component\Serializer\Exception\MissingConstructorArgumentsException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
-class ConstraintViolationErrorHandler implements ErrorHandlerInterface
+final class ConstraintViolationErrorHandler implements ErrorHandlerInterface
 {
     /**
      * @param array<string, mixed> $data

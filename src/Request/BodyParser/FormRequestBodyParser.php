@@ -9,7 +9,7 @@ namespace Fusonic\HttpKernelExtensions\Request\BodyParser;
 
 use Symfony\Component\HttpFoundation\Request;
 
-class FormRequestBodyParser implements RequestBodyParserInterface
+final class FormRequestBodyParser implements RequestBodyParserInterface
 {
     public function parse(Request $request): array
     {

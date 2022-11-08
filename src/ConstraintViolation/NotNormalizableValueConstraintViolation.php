@@ -15,7 +15,7 @@ use Symfony\Component\Validator\ConstraintViolation;
 /**
  * Wraps a {@see NotNormalizableValueException} into a {@see ConstraintViolation}.
  */
-class NotNormalizableValueConstraintViolation extends ConstraintViolation
+final class NotNormalizableValueConstraintViolation extends ConstraintViolation
 {
     public function __construct(NotNormalizableValueException $exception, array $data, string $className)
     {

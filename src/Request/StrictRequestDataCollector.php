@@ -17,7 +17,7 @@ use Fusonic\HttpKernelExtensions\Request\UrlParser\UrlParserInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
-class StrictRequestDataCollector implements RequestDataCollectorInterface
+final class StrictRequestDataCollector implements RequestDataCollectorInterface
 {
     /**
      * @var array<string, RequestBodyParserInterface>
@@ -62,7 +62,7 @@ class StrictRequestDataCollector implements RequestDataCollectorInterface
      *
      * @return array<string, mixed>
      */
-    protected function mergeRequestData(array $data, array $routeParameters): array
+    private function mergeRequestData(array $data, array $routeParameters): array
     {
         if (count($keys = array_intersect_key($data, $routeParameters)) > 0) {
             throw new BadRequestHttpException(sprintf('Parameters (%s) used as route attributes can not be used in the request body or query parameters.', implode(', ', array_keys($keys))));
@@ -74,7 +74,7 @@ class StrictRequestDataCollector implements RequestDataCollectorInterface
     /**
      * @return mixed[]
      */
-    protected function parseRequestBody(Request $request): array
+    private function parseRequestBody(Request $request): array
     {
         $requestBodyParser = $this->requestBodyParsers[$request->getContentType()] ?? null;
 
@@ -93,19 +93,19 @@ class StrictRequestDataCollector implements RequestDataCollectorInterface
      *
      * @return array<string, mixed>
      */
-    protected function parseProperties(array $params, string $className): array
+    private function parseProperties(array $params, string $className): array
     {
         $reflectionClass = ReflectionClassCache::getReflectionClass($className);
 
-        foreach ($params as $key => $param) {
-            if ($reflectionClass->hasProperty($key) && is_string($param)) {
-                $property = $reflectionClass->getProperty($key);
+        foreach ($params as $name => $param) {
+            if ($reflectionClass->hasProperty($name) && is_string($param)) {
+                $property = $reflectionClass->getProperty($name);
                 /** @var \ReflectionNamedType|null $propertyType */
                 $propertyType = $property->getType();
                 $type = $propertyType?->getName();
 
                 if (null !== $type) {
-                    $params[$key] = match ($type) {
+                    $params[$name] = match ($type) {
                         'int' => $this->urlParser->parseInteger($param),
                         'float' => $this->urlParser->parseFloat($param),
                         'bool' => $this->urlParser->parseBoolean($param),

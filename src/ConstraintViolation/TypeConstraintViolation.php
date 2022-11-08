@@ -14,7 +14,7 @@ use TypeError;
 /**
  * Wraps a {@see TypeError} into a {@see ConstraintViolation}.
  */
-class TypeConstraintViolation extends ConstraintViolation
+final class TypeConstraintViolation extends ConstraintViolation
 {
     private const EXPECTED_MATCHES = 4;
 

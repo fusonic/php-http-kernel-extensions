@@ -7,7 +7,7 @@ declare(strict_types=1);
 
 namespace Fusonic\HttpKernelExtensions\Request\UrlParser;
 
-class FilterVarUrlParser implements UrlParserInterface
+final class FilterVarUrlParser implements UrlParserInterface
 {
     public function parseInteger(string $value): ?int
     {
