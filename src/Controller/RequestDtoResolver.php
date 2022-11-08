@@ -18,7 +18,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ArgumentValueResolverInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -73,13 +72,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
 
         $data = $this->modelDataParser->collect($request, $className);
 
-        if (in_array($request->getMethod(), self::METHODS_WITH_STRICT_TYPE_CHECKS, true)) {
-            $options = [];
-        } else {
-            $options = [AbstractObjectNormalizer::DISABLE_TYPE_ENFORCEMENT => true];
-        }
-
-        $dto = $this->denormalize($data, $className, $options);
+        $dto = $this->denormalize($data, $className);
         $this->applyProviders($dto);
         $this->validate($dto);
 
@@ -117,13 +110,12 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
     /**
      * @param array<mixed>         $data
      * @param class-string         $class
-     * @param array<string, mixed> $options
      */
-    private function denormalize(array $data, string $class, array $options): object
+    private function denormalize(array $data, string $class): object
     {
         try {
             if (count($data) > 0) {
-                $dto = $this->serializer->denormalize($data, $class, JsonEncoder::FORMAT, $options);
+                $dto = $this->serializer->denormalize($data, $class, JsonEncoder::FORMAT);
             } else {
                 $dto = new $class();
             }

@@ -17,7 +17,7 @@ class RouteParameterDto
     #[Assert\NotNull]
     private string $string;
     private string $float;
-    private int $bool;
+    private bool $bool;
 
     #[Assert\Valid]
     private SubTypeDto $subType;
@@ -55,12 +55,12 @@ class RouteParameterDto
         $this->float = $float;
     }
 
-    public function isBool(): int
+    public function isBool(): bool
     {
         return $this->bool;
     }
 
-    public function setBool(int $bool): void
+    public function setBool(bool $bool): void
     {
         $this->bool = $bool;
     }

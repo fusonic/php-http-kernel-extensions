@@ -354,12 +354,19 @@ class RequestDtoResolverTest extends TestCase
         $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
         $generator = $resolver->resolve($request, $argument);
 
-        $dto = $generator->current();
-        self::assertInstanceOf(RouteParameterDto::class, $dto);
-        self::assertSame(5, $dto->getInt());
-        self::assertSame('9.99', $dto->getFloat());
-        self::assertSame('foobar', $dto->getString());
-        self::assertSame(1, $dto->isBool());
+        $ex = null;
+        try {
+            $generator->current();
+        } catch (ConstraintViolationException $ex) {
+        }
+        self::assertNotNull($ex);
+        self::assertSame('ConstraintViolation: This value should be of type string.', $ex->getMessage());
+        self::assertCount(1, $ex->getConstraintViolationList());
+        $violation = $ex->getConstraintViolationList()[0];
+        self::assertInstanceOf(NotNormalizableValueConstraintViolation::class, $violation);
+        
+        self::assertSame('float', $violation->getPropertyPath());
+        self::assertSame('float', $violation->getInvalidValue());
     }
 
     public function testRouteParameterHandlingWithStrings(): void
@@ -384,7 +391,7 @@ class RequestDtoResolverTest extends TestCase
         self::assertSame(5, $dto->getInt());
         self::assertSame('9.99', $dto->getFloat());
         self::assertSame('foobar', $dto->getString());
-        self::assertSame(1, $dto->isBool());
+        self::assertSame(true, $dto->isBool());
     }
 
     public function testInvalidTypeMappingHandling(): void
@@ -514,7 +521,9 @@ class RequestDtoResolverTest extends TestCase
         $violations = $exception->getConstraintViolationList();
 
         self::assertCount(1, $violations);
-        self::assertInstanceOf(TypeConstraintViolation::class, $violations->get(0));
+        self::assertInstanceOf(NotNormalizableValueConstraintViolation::class, $violations->get(0));
+        self::assertSame('null', $violations->get(0)->getInvalidValue());
+        self::assertSame('requiredArgument', $violations->get(0)->getPropertyPath());
     }
 
     public function testIntegerRouteParameterTypeError(): void
