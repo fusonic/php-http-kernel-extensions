@@ -93,7 +93,7 @@ class StrictRequestDataCollector implements RequestDataCollectorInterface
      *
      * @return array<string, mixed>
      */
-    private function parseProperties(array $params, string $className): array
+    protected function parseProperties(array $params, string $className): array
     {
         $reflectionClass = ReflectionClassCache::getReflectionClass($className);
 
