@@ -194,6 +194,10 @@ into an implementation of `Fusonic\HttpKernelExtensions\Request\RequestDataColle
 `Fusonic\HttpKernelExtensions\Controller\RequestDtoResolver`. Inside the `RequestDataCollectorInterface` you can
 also modify the behaviour of how and which values are used from the `Request` object.
 
+Data that originates from the route attributes and query parameters are also validated against the model. By default
+it will use the `filter_var` function with the types based on the model to convert the values. To override the parsing 
+you can create your own implementation of `Fusonic\HttpKernelExtensions\Request\UrlParser\UrlParserInterface`.
+
 #### Error handling
 
 The extension provides a default error handler (`http-kernel-extensions/src/ErrorHandler/ConstraintViolationErrorHandler.php`) which
