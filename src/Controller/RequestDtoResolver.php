@@ -108,8 +108,8 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
     }
 
     /**
-     * @param array<mixed>         $data
-     * @param class-string         $class
+     * @param array<mixed> $data
+     * @param class-string $class
      */
     private function denormalize(array $data, string $class): object
     {

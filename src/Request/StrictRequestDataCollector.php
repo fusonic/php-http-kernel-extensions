@@ -98,11 +98,7 @@ class StrictRequestDataCollector implements RequestDataCollectorInterface
         $reflectionClass = ReflectionClassCache::getReflectionClass($className);
 
         foreach ($params as $key => $param) {
-            if (!$reflectionClass->hasProperty($key)) {
-                throw new \LogicException(sprintf('Property `%s` does not exist on class `%s`.', $key, $className));
-            }
-
-            if (is_string($param)) {
+            if ($reflectionClass->hasProperty($key) && is_string($param)) {
                 $property = $reflectionClass->getProperty($key);
                 /** @var \ReflectionNamedType|null $propertyType */
                 $propertyType = $property->getType();

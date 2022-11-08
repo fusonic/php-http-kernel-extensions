@@ -11,7 +11,6 @@ use Fusonic\HttpKernelExtensions\Attribute\FromRequest;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\ArgumentCountConstraintViolation;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\MissingConstructorArgumentsConstraintViolation;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\NotNormalizableValueConstraintViolation;
-use Fusonic\HttpKernelExtensions\ConstraintViolation\TypeConstraintViolation;
 use Fusonic\HttpKernelExtensions\Controller\RequestDtoResolver;
 use Fusonic\HttpKernelExtensions\Exception\ConstraintViolationException;
 use Fusonic\HttpKernelExtensions\Normalizer\ConstraintViolationExceptionNormalizer;
@@ -364,7 +363,7 @@ class RequestDtoResolverTest extends TestCase
         self::assertCount(1, $ex->getConstraintViolationList());
         $violation = $ex->getConstraintViolationList()[0];
         self::assertInstanceOf(NotNormalizableValueConstraintViolation::class, $violation);
-        
+
         self::assertSame('float', $violation->getPropertyPath());
         self::assertSame('float', $violation->getInvalidValue());
     }
