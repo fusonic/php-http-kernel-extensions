@@ -10,7 +10,7 @@ namespace Fusonic\HttpKernelExtensions\Request\UrlParser;
 interface UrlParserInterface
 {
     /**
-     * Determine whether a value is considered null. For example: if an empty string be considered as null.
+     * Determine whether a value is considered null. For example: if an empty string should be considered as null.
      */
     public function isNull(?string $value): bool;
 
@@ -22,5 +22,8 @@ interface UrlParserInterface
 
     public function parseString(string $value): ?string;
 
+    /**
+     * @param class-string $className
+     */
     public function handleFailure(string $attribute, string $className, string $expectedType, string $value): void;
 }

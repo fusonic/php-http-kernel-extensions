@@ -96,6 +96,7 @@ final class StrictRequestDataCollector implements RequestDataCollectorInterface
      * Parse the string properties of the appropriate types based on the types in the class. Since route parameters
      * and query parameters always come in as strings.
      *
+     * @param class-string         $className
      * @param array<string, mixed> $params
      *
      * @return array<string, mixed>
