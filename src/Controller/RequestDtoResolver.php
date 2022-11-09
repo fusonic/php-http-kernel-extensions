@@ -23,19 +23,12 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class RequestDtoResolver implements ArgumentValueResolverInterface
 {
-    public const METHODS_WITH_STRICT_TYPE_CHECKS = [
-        Request::METHOD_PUT,
-        Request::METHOD_POST,
-        Request::METHOD_DELETE,
-        Request::METHOD_PATCH,
-    ];
-
     /**
      * @var ContextAwareProviderInterface[]
      */
     private array $providers = [];
     private ErrorHandlerInterface $errorHandler;
-    private RequestDataCollectorInterface $modelDataParser;
+    private RequestDataCollectorInterface $requestDataCollector;
 
     public function __construct(
         private readonly DenormalizerInterface $serializer,
@@ -45,7 +38,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         ?RequestDataCollectorInterface $modelDataParser = null,
     ) {
         $this->errorHandler = $errorHandler ?? new ConstraintViolationErrorHandler();
-        $this->modelDataParser = $modelDataParser ?? new StrictRequestDataCollector();
+        $this->requestDataCollector = $modelDataParser ?? new StrictRequestDataCollector();
 
         foreach ($providers as $provider) {
             if ($provider instanceof ContextAwareProviderInterface) {
@@ -70,9 +63,15 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         /** @var class-string $className */
         $className = $argument->getType();
 
-        $data = $this->modelDataParser->collect($request, $className);
+        $data = [];
+        try {
+            $data = $this->requestDataCollector->collect($request, $className);
 
-        $dto = $this->denormalize($data, $className);
+            $dto = $this->denormalize($data, $className);
+        } catch (\Throwable $ex) {
+            throw $this->errorHandler->handleDenormalizeError($ex, $data, $className);
+        }
+
         $this->applyProviders($dto);
         $this->validate($dto);
 
@@ -113,17 +112,13 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
      */
     private function denormalize(array $data, string $class): object
     {
-        try {
-            if (count($data) > 0) {
-                $dto = $this->serializer->denormalize($data, $class, JsonEncoder::FORMAT);
-            } else {
-                $dto = new $class();
-            }
-
-            return $dto;
-        } catch (\Throwable $ex) {
-            throw $this->errorHandler->handleDenormalizeError($ex, $data, $class);
+        if (count($data) > 0) {
+            $dto = $this->serializer->denormalize($data, $class, JsonEncoder::FORMAT);
+        } else {
+            $dto = new $class();
         }
+
+        return $dto;
     }
 
     private function validate(object $dto): void

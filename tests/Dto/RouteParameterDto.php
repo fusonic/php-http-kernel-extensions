@@ -16,7 +16,7 @@ class RouteParameterDto
 
     #[Assert\NotNull]
     private string $string;
-    private string $float;
+    private ?float $float;
     private bool $bool;
 
     #[Assert\Valid]
@@ -45,12 +45,12 @@ class RouteParameterDto
         $this->string = $string;
     }
 
-    public function getFloat(): string
+    public function getFloat(): ?float
     {
         return $this->float;
     }
 
-    public function setFloat(string $float): void
+    public function setFloat(?float $float): void
     {
         $this->float = $float;
     }

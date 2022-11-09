@@ -7,8 +7,15 @@ declare(strict_types=1);
 
 namespace Fusonic\HttpKernelExtensions\Request\UrlParser;
 
+use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
+
 final class FilterVarUrlParser implements UrlParserInterface
 {
+    public function isNull(?string $value): bool
+    {
+        return null === $value || '' === $value;
+    }
+
     public function parseInteger(string $value): ?int
     {
         return filter_var($value, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
@@ -24,8 +31,13 @@ final class FilterVarUrlParser implements UrlParserInterface
         return filter_var($value, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
     }
 
-    public function parseString(string $value): ?string
+    public function parseString(string $value): string
     {
         return $value;
+    }
+
+    public function handleFailure(string $attribute, string $className, string $expectedType, string $value): void
+    {
+        throw NotNormalizableValueException::createForUnexpectedDataType(sprintf('The type of the "%s" attribute for class "%s" must be %s ("%s" given).', $attribute, $className, $expectedType, $value), $value, [$expectedType]);
     }
 }

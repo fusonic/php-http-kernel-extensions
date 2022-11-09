@@ -343,7 +343,7 @@ class RequestDtoResolverTest extends TestCase
             '_route_params' => [
                 'int' => 5,
                 'float' => 9.99,
-                'string' => 'foobar',
+                'string' => 9.99,
                 'bool' => true,
             ],
         ];
@@ -364,7 +364,7 @@ class RequestDtoResolverTest extends TestCase
         $violation = $ex->getConstraintViolationList()[0];
         self::assertInstanceOf(NotNormalizableValueConstraintViolation::class, $violation);
 
-        self::assertSame('float', $violation->getPropertyPath());
+        self::assertSame('string', $violation->getPropertyPath());
         self::assertSame('float', $violation->getInvalidValue());
     }
 
@@ -375,7 +375,7 @@ class RequestDtoResolverTest extends TestCase
                 'int' => '5',
                 'float' => '9.99',
                 'string' => 'foobar',
-                'bool' => true,
+                'bool' => 'true',
             ],
         ];
         $request = new Request([], [], $attributes);
@@ -388,7 +388,7 @@ class RequestDtoResolverTest extends TestCase
         $dto = $generator->current();
         self::assertInstanceOf(RouteParameterDto::class, $dto);
         self::assertSame(5, $dto->getInt());
-        self::assertSame('9.99', $dto->getFloat());
+        self::assertSame(9.99, $dto->getFloat());
         self::assertSame('foobar', $dto->getString());
         self::assertSame(true, $dto->isBool());
     }
@@ -495,6 +495,34 @@ class RequestDtoResolverTest extends TestCase
 
         self::assertCount(1, $violations);
         self::assertInstanceOf($expectedViolationClass, $violations->get(0));
+    }
+
+    public function testUrlParsingError(): void
+    {
+        $request = new Request(['requiredArgument' => 'aaaa']);
+        $request->setMethod(Request::METHOD_GET);
+
+        $argument = $this->createArgumentMetadata(DummyClassA::class, [new FromRequest()]);
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
+        self::assertTrue($resolver->supports($request, $argument));
+        $generator = $resolver->resolve($request, $argument);
+
+        $exception = null;
+        try {
+            $generator->current();
+        } catch (\Throwable $e) {
+            $exception = $e;
+        }
+
+        self::assertNotNull($exception);
+        self::assertInstanceOf(ConstraintViolationException::class, $exception);
+        $violations = $exception->getConstraintViolationList();
+
+        self::assertCount(1, $violations);
+        self::assertInstanceOf(NotNormalizableValueConstraintViolation::class, $violations->get(0));
+        self::assertSame('aaaa', $violations->get(0)->getInvalidValue());
+        self::assertSame('requiredArgument', $violations->get(0)->getPropertyPath());
     }
 
     public function testTypeError(): void

@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace Fusonic\HttpKernelExtensions\Request;
 
 use Fusonic\HttpKernelExtensions\Cache\ReflectionClassCache;
-use Fusonic\HttpKernelExtensions\Controller\RequestDtoResolver;
 use Fusonic\HttpKernelExtensions\Request\BodyParser\FormRequestBodyParser;
 use Fusonic\HttpKernelExtensions\Request\BodyParser\JsonRequestBodyParser;
 use Fusonic\HttpKernelExtensions\Request\BodyParser\RequestBodyParserInterface;
@@ -16,9 +15,17 @@ use Fusonic\HttpKernelExtensions\Request\UrlParser\FilterVarUrlParser;
 use Fusonic\HttpKernelExtensions\Request\UrlParser\UrlParserInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\PropertyInfo\Type;
 
 final class StrictRequestDataCollector implements RequestDataCollectorInterface
 {
+    public const METHODS_WITH_STRICT_TYPE_CHECKS = [
+        Request::METHOD_PUT,
+        Request::METHOD_POST,
+        Request::METHOD_DELETE,
+        Request::METHOD_PATCH,
+    ];
+
     /**
      * @var array<string, RequestBodyParserInterface>
      */
@@ -49,7 +56,7 @@ final class StrictRequestDataCollector implements RequestDataCollectorInterface
     {
         $routeParameters = $this->parseProperties($request->attributes->get('_route_params', []), $className);
 
-        if (in_array($request->getMethod(), RequestDtoResolver::METHODS_WITH_STRICT_TYPE_CHECKS, true)) {
+        if (in_array($request->getMethod(), self::METHODS_WITH_STRICT_TYPE_CHECKS, true)) {
             return $this->mergeRequestData($this->parseRequestBody($request), $routeParameters);
         }
 
@@ -104,13 +111,36 @@ final class StrictRequestDataCollector implements RequestDataCollectorInterface
                 $propertyType = $property->getType();
                 $type = $propertyType?->getName();
 
-                if (null !== $type) {
-                    $params[$name] = match ($type) {
-                        'int' => $this->urlParser->parseInteger($param),
-                        'float' => $this->urlParser->parseFloat($param),
-                        'bool' => $this->urlParser->parseBoolean($param),
-                        default => $this->urlParser->parseString($param)
-                    };
+                if (null !== $propertyType && null !== $type) {
+                    if ($propertyType->allowsNull() && $this->urlParser->isNull($param)) {
+                        $params[$name] = null;
+                    } elseif (Type::BUILTIN_TYPE_INT === $type) {
+                        $value = $this->urlParser->parseInteger($param);
+
+                        if (null === $value) {
+                            $this->urlParser->handleFailure($name, $className, Type::BUILTIN_TYPE_INT, $param);
+                        }
+
+                        $params[$name] = $value;
+                    } elseif (Type::BUILTIN_TYPE_FLOAT === $type) {
+                        $value = $this->urlParser->parseFloat($param);
+
+                        if (null === $value) {
+                            $this->urlParser->handleFailure($name, $className, Type::BUILTIN_TYPE_FLOAT, $param);
+                        }
+
+                        $params[$name] = $value;
+                    } elseif (Type::BUILTIN_TYPE_BOOL === $type) {
+                        $value = $this->urlParser->parseBoolean($param);
+
+                        if (null === $value) {
+                            $this->urlParser->handleFailure($name, $className, Type::BUILTIN_TYPE_BOOL, $param);
+                        }
+
+                        $params[$name] = $value;
+                    } else {
+                        $params[$name] = $this->urlParser->parseString($param);
+                    }
                 }
             }
         }
