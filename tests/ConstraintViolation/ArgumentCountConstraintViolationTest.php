@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace Fusonic\HttpKernelExtensions\Tests\ConstraintViolation;
 
-use ArgumentCountError;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\ArgumentCountConstraintViolation;
 use Fusonic\HttpKernelExtensions\Exception\ConstraintViolationException;
 use Fusonic\HttpKernelExtensions\Normalizer\ConstraintViolationExceptionNormalizer;
@@ -27,7 +26,7 @@ class ArgumentCountConstraintViolationTest extends TestCase
             // Instantiate class without required arguments to trigger the exception
             // @phpstan-ignore-next-line
             new $testClassName();
-        } catch (ArgumentCountError $ex) {
+        } catch (\ArgumentCountError $ex) {
             $error = $ex;
         }
 

@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace Fusonic\HttpKernelExtensions\ConstraintViolation;
 
 use ArgumentCountError;
-use ReflectionClass;
 use Symfony\Component\Validator\Constraints\NotNull;
 use Symfony\Component\Validator\ConstraintViolation;
 
@@ -19,7 +18,7 @@ class ArgumentCountConstraintViolation extends ConstraintViolation
 {
     private const EXPECTED_MATCHES = 6;
 
-    public function __construct(ArgumentCountError $error)
+    public function __construct(\ArgumentCountError $error)
     {
         $message = $error->getMessage();
 
@@ -41,7 +40,7 @@ class ArgumentCountConstraintViolation extends ConstraintViolation
             throw $error;
         }
 
-        $class = new ReflectionClass($matches[1]);
+        $class = new \ReflectionClass($matches[1]);
 
         $constructor = $class->getConstructor();
         $parameters = $constructor?->getParameters() ?? [];

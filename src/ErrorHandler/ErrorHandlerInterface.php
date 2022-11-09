@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace Fusonic\HttpKernelExtensions\ErrorHandler;
 
 use Symfony\Component\Validator\ConstraintViolationListInterface;
-use Throwable;
 
 interface ErrorHandlerInterface
 {
@@ -22,7 +21,7 @@ interface ErrorHandlerInterface
      * @param array<string, mixed> $data
      * @param class-string         $className
      */
-    public function handleDenormalizeError(Throwable $ex, array $data, string $className): Throwable;
+    public function handleDenormalizeError(\Throwable $ex, array $data, string $className): \Throwable;
 
     /**
      * If only constraint violations are discovered but the object could be created, the choice what to do is the devs.

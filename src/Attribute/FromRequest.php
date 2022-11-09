@@ -9,7 +9,7 @@ namespace Fusonic\HttpKernelExtensions\Attribute;
 
 use Attribute;
 
-#[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_CLASS)]
+#[\Attribute(\Attribute::TARGET_PARAMETER | \Attribute::TARGET_CLASS)]
 class FromRequest
 {
 }

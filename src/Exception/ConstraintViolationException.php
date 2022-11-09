@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace Fusonic\HttpKernelExtensions\Exception;
 
-use RuntimeException;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationInterface;
 use Symfony\Component\Validator\ConstraintViolationList;
@@ -18,7 +17,7 @@ use Symfony\Component\Validator\ConstraintViolationListInterface;
  * to throw this exception with the results of calling `validate` on the
  * validator ({@see \Symfony\Component\Validator\Validator\ValidatorInterface}).
  */
-class ConstraintViolationException extends RuntimeException
+class ConstraintViolationException extends \RuntimeException
 {
     public const NAME = 'ConstraintViolation';
 

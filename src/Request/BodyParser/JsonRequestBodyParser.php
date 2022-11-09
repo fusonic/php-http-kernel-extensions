@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace Fusonic\HttpKernelExtensions\Request\BodyParser;
 
-use JsonException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
@@ -31,7 +30,7 @@ class JsonRequestBodyParser implements RequestBodyParserInterface
 
         try {
             $data = json_decode($content, true, $this->maxJsonDepth, JSON_THROW_ON_ERROR);
-        } catch (JsonException $ex) {
+        } catch (\JsonException $ex) {
             throw new BadRequestHttpException('The request body seems to contain invalid json!', $ex);
         }
 

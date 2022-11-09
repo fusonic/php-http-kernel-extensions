@@ -13,10 +13,6 @@ use Fusonic\HttpKernelExtensions\ErrorHandler\ErrorHandlerInterface;
 use Fusonic\HttpKernelExtensions\Provider\ContextAwareProviderInterface;
 use Fusonic\HttpKernelExtensions\Request\RequestDataCollectorInterface;
 use Fusonic\HttpKernelExtensions\Request\StrictRequestDataCollector;
-use Generator;
-use InvalidArgumentException;
-use ReflectionAttribute;
-use ReflectionClass;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ArgumentValueResolverInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
@@ -24,7 +20,6 @@ use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Throwable;
 
 final class RequestDtoResolver implements ArgumentValueResolverInterface
 {
@@ -56,7 +51,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
             if ($provider instanceof ContextAwareProviderInterface) {
                 $this->providers[] = $provider;
             } else {
-                throw new InvalidArgumentException(sprintf('Given $providers must be instance of `%s`.', ContextAwareProviderInterface::class));
+                throw new \InvalidArgumentException(sprintf('Given $providers must be instance of `%s`.', ContextAwareProviderInterface::class));
             }
         }
     }
@@ -66,10 +61,10 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         return $this->isSupportedArgument($argument);
     }
 
-    public function resolve(Request $request, ArgumentMetadata $argument): Generator
+    public function resolve(Request $request, ArgumentMetadata $argument): \Generator
     {
         if (!$this->isSupportedArgument($argument)) {
-            throw new InvalidArgumentException('The parameter has to have the attribute .'.FromRequest::class.'! This should have been checked in the supports function!');
+            throw new \InvalidArgumentException('The parameter has to have the attribute .'.FromRequest::class.'! This should have been checked in the supports function!');
         }
 
         $data = $this->modelDataParser->collect($request);
@@ -111,8 +106,8 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         }
 
         // attribute via class
-        $class = new ReflectionClass($argument->getType());
-        $attributes = $class->getAttributes(FromRequest::class, ReflectionAttribute::IS_INSTANCEOF);
+        $class = new \ReflectionClass($argument->getType());
+        $attributes = $class->getAttributes(FromRequest::class, \ReflectionAttribute::IS_INSTANCEOF);
 
         return count($attributes) > 0;
     }
@@ -132,7 +127,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
             }
 
             return $dto;
-        } catch (Throwable $ex) {
+        } catch (\Throwable $ex) {
             throw $this->errorHandler->handleDenormalizeError($ex, $data, $class);
         }
     }

@@ -7,8 +7,6 @@ declare(strict_types=1);
 
 namespace Fusonic\HttpKernelExtensions\ConstraintViolation;
 
-use ReflectionClass;
-use ReflectionNamedType;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Symfony\Component\Validator\Constraints\Type;
 use Symfony\Component\Validator\ConstraintViolation;
@@ -90,14 +88,14 @@ class NotNormalizableValueConstraintViolation extends ConstraintViolation
      */
     private function determinePropertyPath(array $data, string $className): ?string
     {
-        $class = new ReflectionClass($className);
+        $class = new \ReflectionClass($className);
 
         $constructor = $class->getConstructor();
         $parameters = $constructor?->getParameters() ?? [];
 
         foreach ($parameters as $parameter) {
             $parameterName = $parameter->getName();
-            /** @var ReflectionNamedType|null $reflectionType */
+            /** @var \ReflectionNamedType|null $reflectionType */
             $reflectionType = $parameter->getType();
 
             if (!$parameter->isOptional() && null !== $reflectionType && 'array' === $reflectionType->getName()) {

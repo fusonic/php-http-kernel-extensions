@@ -18,7 +18,7 @@ class TypeConstraintViolation extends ConstraintViolation
 {
     private const EXPECTED_MATCHES = 4;
 
-    public function __construct(TypeError $error)
+    public function __construct(\TypeError $error)
     {
         $message = $error->getMessage();
 

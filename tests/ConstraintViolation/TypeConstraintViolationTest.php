@@ -13,7 +13,6 @@ use Fusonic\HttpKernelExtensions\Normalizer\ConstraintViolationExceptionNormaliz
 use Fusonic\HttpKernelExtensions\Tests\Dto\DummyClassA;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Serializer\Normalizer\ConstraintViolationListNormalizer;
-use TypeError;
 
 class TypeConstraintViolationTest extends TestCase
 {
@@ -27,7 +26,7 @@ class TypeConstraintViolationTest extends TestCase
             // Instantiate class with wrong argument type to trigger the exception
             // @phpstan-ignore-next-line
             new $testClassName('wrong type');
-        } catch (TypeError $ex) {
+        } catch (\TypeError $ex) {
             $error = $ex;
         }
 

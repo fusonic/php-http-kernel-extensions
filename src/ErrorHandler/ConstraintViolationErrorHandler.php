@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace Fusonic\HttpKernelExtensions\ErrorHandler;
 
-use ArgumentCountError;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\ArgumentCountConstraintViolation;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\MissingConstructorArgumentsConstraintViolation;
 use Fusonic\HttpKernelExtensions\ConstraintViolation\NotNormalizableValueConstraintViolation;
@@ -16,8 +15,6 @@ use Fusonic\HttpKernelExtensions\Exception\ConstraintViolationException;
 use Symfony\Component\Serializer\Exception\MissingConstructorArgumentsException;
 use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
-use Throwable;
-use TypeError;
 
 class ConstraintViolationErrorHandler implements ErrorHandlerInterface
 {
@@ -25,7 +22,7 @@ class ConstraintViolationErrorHandler implements ErrorHandlerInterface
      * @param array<string, mixed> $data
      * @param class-string         $className
      */
-    public function handleDenormalizeError(Throwable $ex, array $data, string $className): Throwable
+    public function handleDenormalizeError(\Throwable $ex, array $data, string $className): \Throwable
     {
         if ($ex instanceof NotNormalizableValueException) {
             return ConstraintViolationException::fromConstraintViolation(
@@ -39,11 +36,11 @@ class ConstraintViolationErrorHandler implements ErrorHandlerInterface
             );
         }
 
-        if ($ex instanceof ArgumentCountError) {
+        if ($ex instanceof \ArgumentCountError) {
             return ConstraintViolationException::fromConstraintViolation(new ArgumentCountConstraintViolation($ex));
         }
 
-        if ($ex instanceof TypeError) {
+        if ($ex instanceof \TypeError) {
             return ConstraintViolationException::fromConstraintViolation(new TypeConstraintViolation($ex));
         }
 

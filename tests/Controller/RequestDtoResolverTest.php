@@ -52,7 +52,6 @@ use Symfony\Component\Serializer\Normalizer\UnwrappingDenormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Throwable;
 
 class RequestDtoResolverTest extends TestCase
 {
@@ -481,7 +480,7 @@ class RequestDtoResolverTest extends TestCase
         $exception = null;
         try {
             $generator->current();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $exception = $e;
         }
 
@@ -507,7 +506,7 @@ class RequestDtoResolverTest extends TestCase
         $exception = null;
         try {
             $generator->current();
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             $exception = $e;
         }
 
