@@ -23,6 +23,9 @@ interface UrlParserInterface
     public function parseString(string $value): ?string;
 
     /**
+     * What to do in case one of the types is invalid. For example: throw an exception or do nothing and
+     * let a later validation step handle this.
+     *
      * @param class-string $className
      */
     public function handleFailure(string $attribute, string $className, string $expectedType, string $value): void;
