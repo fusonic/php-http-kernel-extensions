@@ -1,7 +1,7 @@
 {
     "name": "fusonic/http-kernel-extensions",
     "license": "MIT",
-    "version": "5.3.0",
+    "version": "5.3.1",
     "description": "Symfony HttpKernel Component Extensions.",
     "type": "library",
     "authors": [
@@ -37,13 +37,19 @@
         "symfony/phpunit-bridge": "^5.4|^6.0",
         "symfony/cache": "^5.4|^6.0",
         "phpstan/phpstan-strict-rules": "^1.1",
-        "phpstan/phpstan-symfony": "^1.1"
+        "phpstan/phpstan-symfony": "^1.1",
+        "symplify/phpstan-rules": "^11.1"
     },
     "scripts": {
-        "phpstan": "php -d memory_limit=2048M vendor/bin/phpstan analyse",
-        "phpcs-check": "vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php -v --dry-run --diff --using-cache=yes",
-        "phpcs-fix": "vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php -v --using-cache=yes",
-        "test": "vendor/bin/phpunit --testdox",
-        "test-coverage" : "vendor/bin/phpunit --coverage-text --coverage-cobertura=coverage/cobertura.xml --coverage-html=coverage/html"
+        "phpstan": "XDEBUG_MODE=off php -d memory_limit=2048M vendor/bin/phpstan analyse",
+        "phpcs-check": "XDEBUG_MODE=off vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php -v --dry-run --diff --using-cache=yes",
+        "phpcs-fix": "XDEBUG_MODE=off vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php -v --using-cache=yes",
+        "test": "XDEBUG_MODE=off vendor/bin/phpunit --testdox",
+        "test-coverage" : "XDEBUG_MODE=off vendor/bin/phpunit --coverage-text --coverage-cobertura=coverage/cobertura.xml --coverage-html=coverage/html"
+    },
+    "config": {
+        "allow-plugins": {
+            "infection/extension-installer": true
+        }
     }
 }
