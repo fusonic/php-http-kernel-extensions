@@ -11,9 +11,9 @@ use Symfony\Component\Serializer\Exception\NotNormalizableValueException;
 
 final class FilterVarUrlParser implements UrlParserInterface
 {
-    public function isNull(?string $value): bool
+    public function isNull(string $value): bool
     {
-        return null === $value || '' === $value;
+        return '' === $value;
     }
 
     public function parseInteger(string $value): ?int

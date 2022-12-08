@@ -295,6 +295,45 @@ class RequestDtoResolverTest extends TestCase
         $generator->current();
     }
 
+    public function testQueryParameterObjectHandling(): void
+    {
+        $query = [
+            'objectArgument' => [
+                'requiredArgument' => '10',
+            ],
+        ];
+        $request = new Request($query);
+        $request->setMethod(Request::METHOD_GET);
+        $argument = $this->createArgumentMetadata(NestedDto::class, [new FromRequest()]);
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
+        $generator = $resolver->resolve($request, $argument);
+
+        $dto = $generator->current();
+        self::assertInstanceOf(NestedDto::class, $dto);
+
+        $nestedObject = $dto->getObjectArgument();
+        self::assertSame(10, $nestedObject->getRequiredArgument());
+    }
+
+    public function testQueryParameterArrayHandling(): void
+    {
+        $query = [
+            'items' => ['1', '2', '3'],
+            'nullableItems' => null,
+        ];
+        $request = new Request($query);
+        $request->setMethod(Request::METHOD_GET);
+        $argument = $this->createArgumentMetadata(IntArrayDto::class, [new FromRequest()]);
+
+        $resolver = new RequestDtoResolver($this->getDenormalizer(), $this->getValidator());
+        $generator = $resolver->resolve($request, $argument);
+
+        $dto = $generator->current();
+        self::assertInstanceOf(IntArrayDto::class, $dto);
+        self::assertSame([1, 2, 3], $dto->getItems());
+    }
+
     public function testQueryParameterHandling(): void
     {
         $query = [

@@ -18,12 +18,15 @@ class IntArrayDto
     #[Assert\Valid]
     private array $items;
 
+    public readonly ?array $nullableItems;
+
     /**
      * @param int[] $items
      */
-    public function __construct(array $items)
+    public function __construct(array $items, ?array $nullableItems = null)
     {
         $this->items = $items;
+        $this->nullableItems = $nullableItems;
     }
 
     /**

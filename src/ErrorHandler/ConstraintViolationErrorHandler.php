@@ -40,9 +40,9 @@ final class ConstraintViolationErrorHandler implements ErrorHandlerInterface
             return ConstraintViolationException::fromConstraintViolation(new ArgumentCountConstraintViolation($ex));
         }
 
-        if ($ex instanceof \TypeError) {
-            return ConstraintViolationException::fromConstraintViolation(new TypeConstraintViolation($ex));
-        }
+//        if ($ex instanceof \TypeError) {
+//            return ConstraintViolationException::fromConstraintViolation(new TypeConstraintViolation($ex));
+//        }
 
         return $ex;
     }

@@ -12,7 +12,7 @@ interface UrlParserInterface
     /**
      * Determine whether a value is considered null. For example: if an empty string should be considered as null.
      */
-    public function isNull(?string $value): bool;
+    public function isNull(string $value): bool;
 
     public function parseInteger(string $value): ?int;
 

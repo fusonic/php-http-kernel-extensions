@@ -15,6 +15,9 @@ use Fusonic\HttpKernelExtensions\Request\UrlParser\FilterVarUrlParser;
 use Fusonic\HttpKernelExtensions\Request\UrlParser\UrlParserInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
+use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
+use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
 use Symfony\Component\PropertyInfo\Type;
 
 final class StrictRequestDataCollector implements RequestDataCollectorInterface
@@ -32,13 +35,14 @@ final class StrictRequestDataCollector implements RequestDataCollectorInterface
     private readonly array $requestBodyParsers;
 
     private readonly UrlParserInterface $urlParser;
+    private ?PropertyInfoExtractor $propertyInfoExtractor = null;
 
+    /**
+     * @param array<string, RequestBodyParserInterface>|null $requestBodyParsers
+     */
     public function __construct(
         ?UrlParserInterface $urlParser = null,
 
-        /*
-         * @var array<string, RequestBodyParserInterface>|null
-         */
         ?array $requestBodyParsers = null,
     ) {
         $this->urlParser = $urlParser ?? new FilterVarUrlParser();
@@ -54,13 +58,13 @@ final class StrictRequestDataCollector implements RequestDataCollectorInterface
      */
     public function collect(Request $request, string $className): array
     {
-        $routeParameters = $this->parseProperties($request->attributes->get('_route_params', []), $className);
+        $routeParameters = $this->parseUrlProperties($request->attributes->get('_route_params', []), $className);
 
         if (in_array($request->getMethod(), self::METHODS_WITH_STRICT_TYPE_CHECKS, true)) {
             return $this->mergeRequestData($this->parseRequestBody($request), $routeParameters);
         }
 
-        return $this->mergeRequestData($this->parseProperties($request->query->all(), $className), $routeParameters);
+        return $this->mergeRequestData($this->parseUrlProperties($request->query->all(), $className), $routeParameters);
     }
 
     /**
@@ -101,51 +105,103 @@ final class StrictRequestDataCollector implements RequestDataCollectorInterface
      *
      * @return array<string, mixed>
      */
-    private function parseProperties(array $params, string $className): array
+    private function parseUrlProperties(array $params, string $className): array
     {
         $reflectionClass = ReflectionClassCache::getReflectionClass($className);
 
         foreach ($params as $name => $param) {
-            if ($reflectionClass->hasProperty($name) && is_string($param)) {
+            if ($reflectionClass->hasProperty($name)) {
                 $property = $reflectionClass->getProperty($name);
                 /** @var \ReflectionNamedType|null $propertyType */
                 $propertyType = $property->getType();
+                /** @var string|class-string|null $type */
                 $type = $propertyType?->getName();
 
                 if (null !== $propertyType && null !== $type) {
-                    if ($propertyType->allowsNull() && $this->urlParser->isNull($param)) {
-                        $params[$name] = null;
-                    } elseif (Type::BUILTIN_TYPE_INT === $type) {
-                        $value = $this->urlParser->parseInteger($param);
-
-                        if (null === $value) {
-                            $this->urlParser->handleFailure($name, $className, Type::BUILTIN_TYPE_INT, $param);
+                    if (in_array($type, Type::$builtinTypes, true)) {
+                        if (is_string($param) || is_array($param)) {
+                            $params[$name] = $this->parseProperty($className, $name, $type, $propertyType->allowsNull(), $param);
                         }
-
-                        $params[$name] = $value;
-                    } elseif (Type::BUILTIN_TYPE_FLOAT === $type) {
-                        $value = $this->urlParser->parseFloat($param);
-
-                        if (null === $value) {
-                            $this->urlParser->handleFailure($name, $className, Type::BUILTIN_TYPE_FLOAT, $param);
-                        }
-
-                        $params[$name] = $value;
-                    } elseif (Type::BUILTIN_TYPE_BOOL === $type) {
-                        $value = $this->urlParser->parseBoolean($param);
-
-                        if (null === $value) {
-                            $this->urlParser->handleFailure($name, $className, Type::BUILTIN_TYPE_BOOL, $param);
-                        }
-
-                        $params[$name] = $value;
-                    } else {
-                        $params[$name] = $this->urlParser->parseString($param);
+                    } elseif (class_exists($type)) {
+                        $params[$name] = $this->parseUrlProperties($param, $type);
                     }
                 }
             }
         }
 
         return $params;
+    }
+
+    /**
+     * @param class-string            $className
+     * @param array<array-key, mixed> $param
+     *
+     * @return array<array-key, float|int|bool|string|array<array-key, mixed>|null>
+     */
+    private function parseArrayProperty(string $className, string $name, array $param): array
+    {
+        $arrayPropertyTypes = $this->getPropertyInfoExtractor()->getTypes($className, $name);
+
+        if (null === $arrayPropertyTypes) {
+            return [];
+        }
+
+        $parsedValues = [];
+
+        foreach ($arrayPropertyTypes as $arrayPropertyType) {
+            $collectionValueTypes = $arrayPropertyType->getCollectionValueTypes();
+
+            foreach ($collectionValueTypes as $collectionValueType) {
+                foreach ($param as $key => $arrayItem) {
+                    $parsedValues[$key] = $this->parseProperty($className, $name, $collectionValueType->getBuiltinType(), $collectionValueType->isNullable(), $arrayItem);
+                }
+            }
+        }
+
+        return $parsedValues;
+    }
+
+    /**
+     * @param class-string $className
+     */
+    private function parseProperty(string $className, string $name, string $type, bool $isNullable, string|array $param): int|float|bool|string|null|array
+    {
+        $parsedValue = null;
+
+        if ($isNullable && is_string($param) && $this->urlParser->isNull($param)) {
+            return null;
+        }
+
+        if (Type::BUILTIN_TYPE_ARRAY !== $type && is_array($param)) {
+            $this->urlParser->handleFailure($name, $className, $type, Type::BUILTIN_TYPE_ARRAY);
+        } elseif (is_string($param)) {
+            if (Type::BUILTIN_TYPE_INT === $type) {
+                $parsedValue = $this->urlParser->parseInteger($param);
+            } elseif (Type::BUILTIN_TYPE_FLOAT === $type) {
+                $parsedValue = $this->urlParser->parseFloat($param);
+            } elseif (Type::BUILTIN_TYPE_BOOL === $type) {
+                $parsedValue = $this->urlParser->parseBoolean($param);
+            } elseif (Type::BUILTIN_TYPE_STRING === $type) {
+                $parsedValue = $this->urlParser->parseString($param);
+            }
+        } elseif (Type::BUILTIN_TYPE_ARRAY === $type) {
+            $parsedValue = $this->parseArrayProperty($className, $name, $param);
+        }
+
+        if (null === $parsedValue) {
+            $this->urlParser->handleFailure($name, $className, $type, is_array($param) ? '[]' : $param);
+        }
+
+        return $parsedValue;
+    }
+
+    private function getPropertyInfoExtractor(): PropertyInfoExtractor
+    {
+        if (null === $this->propertyInfoExtractor) {
+            $this->propertyInfoExtractor = new PropertyInfoExtractor([],
+                [new PhpDocExtractor(), new ReflectionExtractor()]);
+        }
+
+        return $this->propertyInfoExtractor;
     }
 }
