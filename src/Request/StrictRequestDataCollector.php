@@ -48,7 +48,7 @@ class StrictRequestDataCollector implements RequestDataCollectorInterface
     {
         $routeParameters = $this->getRouteParams($request);
 
-        if (in_array($request->getMethod(), RequestDtoResolver::METHODS_WITH_STRICT_TYPE_CHECKS, true)) {
+        if (\in_array($request->getMethod(), RequestDtoResolver::METHODS_WITH_STRICT_TYPE_CHECKS, true)) {
             return $this->mergeRequestData($this->parseRequestBody($request), $routeParameters);
         }
 
@@ -61,7 +61,7 @@ class StrictRequestDataCollector implements RequestDataCollectorInterface
 
         if ($this->forceRouteParamsIntegers) {
             foreach ($params as $key => $param) {
-                $value = filter_var($param, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
+                $value = filter_var($param, \FILTER_VALIDATE_INT, \FILTER_NULL_ON_FAILURE);
                 $params[$key] = $value ?? $param;
             }
         }
@@ -77,7 +77,7 @@ class StrictRequestDataCollector implements RequestDataCollectorInterface
      */
     protected function mergeRequestData(array $data, array $routeParameters): array
     {
-        if (count($keys = array_intersect_key($data, $routeParameters)) > 0) {
+        if (\count($keys = array_intersect_key($data, $routeParameters)) > 0) {
             throw new BadRequestHttpException(sprintf('Parameters (%s) used as route attributes can not be used in the request body or query parameters.', implode(', ', array_keys($keys))));
         }
 

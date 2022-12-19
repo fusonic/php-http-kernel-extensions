@@ -69,7 +69,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
 
         $data = $this->modelDataParser->collect($request);
 
-        if (in_array($request->getMethod(), self::METHODS_WITH_STRICT_TYPE_CHECKS, true)) {
+        if (\in_array($request->getMethod(), self::METHODS_WITH_STRICT_TYPE_CHECKS, true)) {
             $options = [];
         } else {
             $options = [AbstractObjectNormalizer::DISABLE_TYPE_ENFORCEMENT => true];
@@ -96,12 +96,12 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
     private function isSupportedArgument(ArgumentMetadata $argument): bool
     {
         // no type and nonexistent classes should be ignored
-        if (!is_string($argument->getType()) || '' === $argument->getType() || !class_exists($argument->getType())) {
+        if (!\is_string($argument->getType()) || '' === $argument->getType() || !class_exists($argument->getType())) {
             return false;
         }
 
         // attribute via parameter
-        if (count($argument->getAttributes(FromRequest::class)) > 0) {
+        if (\count($argument->getAttributes(FromRequest::class)) > 0) {
             return true;
         }
 
@@ -109,7 +109,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
         $class = new \ReflectionClass($argument->getType());
         $attributes = $class->getAttributes(FromRequest::class, \ReflectionAttribute::IS_INSTANCEOF);
 
-        return count($attributes) > 0;
+        return \count($attributes) > 0;
     }
 
     /**
@@ -120,7 +120,7 @@ final class RequestDtoResolver implements ArgumentValueResolverInterface
     private function denormalize(array $data, string $class, array $options): object
     {
         try {
-            if (count($data) > 0) {
+            if (\count($data) > 0) {
                 $dto = $this->serializer->denormalize($data, $class, JsonEncoder::FORMAT, $options);
             } else {
                 $dto = new $class();

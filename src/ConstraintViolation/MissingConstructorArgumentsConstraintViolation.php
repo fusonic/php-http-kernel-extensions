@@ -31,7 +31,7 @@ class MissingConstructorArgumentsConstraintViolation extends ConstraintViolation
 
         preg_match($pattern, $message, $matches);
 
-        if (count($matches) < self::EXPECTED_MATCHES) {
+        if (\count($matches) < self::EXPECTED_MATCHES) {
             throw $exception;
         }
 

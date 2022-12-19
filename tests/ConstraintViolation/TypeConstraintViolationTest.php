@@ -36,7 +36,7 @@ class TypeConstraintViolationTest extends TestCase
         $normalizer = new ConstraintViolationExceptionNormalizer(new ConstraintViolationListNormalizer());
         $result = $normalizer->normalize(ConstraintViolationException::fromConstraintViolation($constraintViolation));
 
-        self::assertEquals(
+        self::assertSame(
             [
                 'type' => 'https://symfony.com/errors/validation',
                 'title' => 'Validation Failed',
@@ -45,11 +45,11 @@ class TypeConstraintViolationTest extends TestCase
                         [
                             'propertyPath' => 'requiredArgument',
                             'title' => 'This value should be of type int.',
-                            'messageTemplate' => 'This value should be of type {{ type }}.',
                             'parameters' => [
-                                    '{{ type }}' => 'int',
-                                ],
+                                '{{ type }}' => 'int',
+                            ],
                             'type' => 'urn:uuid:ba785a8c-82cb-4283-967c-3cf342181b40',
+                            'messageTemplate' => 'This value should be of type {{ type }}.',
                             'errorName' => 'INVALID_TYPE_ERROR',
                         ],
                     ],

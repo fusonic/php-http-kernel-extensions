@@ -153,7 +153,7 @@ class RequestDtoResolverTest extends TestCase
             'subType' => [
                 'test' => 'barfoo',
             ],
-        ], JSON_THROW_ON_ERROR);
+        ], \JSON_THROW_ON_ERROR);
 
         $request = new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/json'], $data);
         $request->setMethod(Request::METHOD_POST);
@@ -164,7 +164,7 @@ class RequestDtoResolverTest extends TestCase
 
         $dto = $generator->current();
         self::assertInstanceOf(TestDto::class, $dto);
-        self::assertEquals(9, $dto->getFloat());
+        self::assertSame(9.0, $dto->getFloat());
     }
 
     public function testStrictTypeMappingForPostJsonRequestBody(): void
@@ -178,7 +178,7 @@ class RequestDtoResolverTest extends TestCase
             'subType' => [
                 'test' => 'barfoo',
             ],
-        ], JSON_THROW_ON_ERROR);
+        ], \JSON_THROW_ON_ERROR);
 
         $request = new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/json'], $data);
         $request->setMethod(Request::METHOD_POST);
@@ -189,12 +189,12 @@ class RequestDtoResolverTest extends TestCase
 
         $dto = $generator->current();
         self::assertInstanceOf(TestDto::class, $dto);
-        self::assertEquals(5, $dto->getInt());
-        self::assertEquals(9.99, $dto->getFloat());
-        self::assertEquals('foobar', $dto->getString());
-        self::assertEquals(true, $dto->isBool());
+        self::assertSame(5, $dto->getInt());
+        self::assertSame(9.99, $dto->getFloat());
+        self::assertSame('foobar', $dto->getString());
+        self::assertTrue($dto->isBool());
 
-        self::assertEquals('barfoo', $dto->getSubType()->getTest());
+        self::assertSame('barfoo', $dto->getSubType()->getTest());
     }
 
     public function testStrictTypeMappingForPostFormRequestBody(): void
@@ -218,12 +218,12 @@ class RequestDtoResolverTest extends TestCase
 
         $dto = $generator->current();
         self::assertInstanceOf(TestDto::class, $dto);
-        self::assertEquals(5, $dto->getInt());
-        self::assertEquals(9.99, $dto->getFloat());
-        self::assertEquals('foobar', $dto->getString());
-        self::assertEquals(true, $dto->isBool());
+        self::assertSame(5, $dto->getInt());
+        self::assertSame(9.99, $dto->getFloat());
+        self::assertSame('foobar', $dto->getString());
+        self::assertTrue($dto->isBool());
 
-        self::assertEquals('barfoo', $dto->getSubType()->getTest());
+        self::assertSame('barfoo', $dto->getSubType()->getTest());
     }
 
     public function testSkippingBodyGetRequest(): void
@@ -239,7 +239,7 @@ class RequestDtoResolverTest extends TestCase
             'subType' => [
                 'test' => 'barfoo',
             ],
-        ], JSON_THROW_ON_ERROR);
+        ], \JSON_THROW_ON_ERROR);
 
         $request = new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/json'], $data);
         $request->setMethod(Request::METHOD_GET);
@@ -314,10 +314,10 @@ class RequestDtoResolverTest extends TestCase
 
         $dto = $generator->current();
         self::assertInstanceOf(TestDto::class, $dto);
-        self::assertEquals(5, $dto->getInt());
-        self::assertEquals(9.99, $dto->getFloat());
-        self::assertEquals('foobar', $dto->getString());
-        self::assertEquals(true, $dto->isBool());
+        self::assertSame(5, $dto->getInt());
+        self::assertSame(9.99, $dto->getFloat());
+        self::assertSame('foobar', $dto->getString());
+        self::assertTrue($dto->isBool());
     }
 
     public function testInvalidQueryParameterHandling(): void
@@ -403,7 +403,7 @@ class RequestDtoResolverTest extends TestCase
             'subType' => [
                 'test' => 'barfoo',
             ],
-        ], JSON_THROW_ON_ERROR);
+        ], \JSON_THROW_ON_ERROR);
         $request = new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/json'], $data);
         $request->setMethod(Request::METHOD_POST);
         $argument = $this->createArgumentMetadata(TestDto::class, [new FromRequest()]);
@@ -437,7 +437,7 @@ class RequestDtoResolverTest extends TestCase
             'subType' => [
                 'test' => 'barfoo',
             ],
-        ], JSON_THROW_ON_ERROR);
+        ], \JSON_THROW_ON_ERROR);
 
         $request = new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/json'], $data);
         $request->setMethod(Request::METHOD_POST);
@@ -467,7 +467,7 @@ class RequestDtoResolverTest extends TestCase
     public function testConstraintViolationErrors(array $data, string $dtoClass, string $expectedViolationClass): void
     {
         /** @var string $data */
-        $data = json_encode($data, JSON_THROW_ON_ERROR);
+        $data = json_encode($data, \JSON_THROW_ON_ERROR);
         $request = new Request([], [], [], [], [], ['CONTENT_TYPE' => 'application/json'], $data);
         $request->setMethod(Request::METHOD_POST);
 

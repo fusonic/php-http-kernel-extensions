@@ -27,7 +27,7 @@ class NotNormalizableValueConstraintViolation extends ConstraintViolation
             $pattern = '/The type of the "(\w+)" attribute for class "(.+)" must be one of "(.+)" \("(.+)" given\)\./';
             preg_match($pattern, $message, $matches);
 
-            if (count($matches) < 5) {
+            if (\count($matches) < 5) {
                 throw $exception;
             }
 
@@ -38,7 +38,7 @@ class NotNormalizableValueConstraintViolation extends ConstraintViolation
             $pattern = '/Failed to denormalize attribute "(\w+)" value for class "(.+)": Expected argument of type "(.+)", "(.+)" given/';
             preg_match($pattern, $message, $matches);
 
-            if (count($matches) < 5) {
+            if (\count($matches) < 5) {
                 throw $exception;
             }
 
@@ -49,7 +49,7 @@ class NotNormalizableValueConstraintViolation extends ConstraintViolation
             $pattern = '/Data expected to be "(.+)", (.+) given\./';
 
             preg_match($pattern, $message, $matches);
-            if (count($matches) < 3) {
+            if (\count($matches) < 3) {
                 throw $exception;
             }
 

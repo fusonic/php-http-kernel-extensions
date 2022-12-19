@@ -34,7 +34,7 @@ class NormalizerTest extends TestCase
         $result = $normalizer->normalize($exception);
 
         self::assertSame('ConstraintViolation: This value is too short. It should have 10 characters or more.', $exception->getMessage());
-        self::assertEquals(
+        self::assertSame(
             [
                 'type' => 'https://symfony.com/errors/validation',
                 'title' => 'Validation Failed',
@@ -43,12 +43,12 @@ class NormalizerTest extends TestCase
                         [
                             'propertyPath' => '',
                             'title' => 'This value is too short. It should have 10 characters or more.',
-                            'messageTemplate' => 'This value is too short. It should have {{ limit }} character or more.|This value is too short. It should have {{ limit }} characters or more.',
                             'parameters' => [
-                                    '{{ value }}' => '"Bernhard"',
-                                    '{{ limit }}' => '10',
-                                ],
+                                '{{ value }}' => '"Bernhard"',
+                                '{{ limit }}' => '10',
+                            ],
                             'type' => 'urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45',
+                            'messageTemplate' => 'This value is too short. It should have {{ limit }} character or more.|This value is too short. It should have {{ limit }} characters or more.',
                             'errorName' => 'TOO_SHORT_ERROR',
                         ],
                     ],

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Fusonic\HttpKernelExtensions\Tests\Dto;
 
 use Fusonic\HttpKernelExtensions\Attribute\FromRequest;

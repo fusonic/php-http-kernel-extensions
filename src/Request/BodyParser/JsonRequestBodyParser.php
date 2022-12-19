@@ -29,7 +29,7 @@ class JsonRequestBodyParser implements RequestBodyParserInterface
         }
 
         try {
-            $data = json_decode($content, true, $this->maxJsonDepth, JSON_THROW_ON_ERROR);
+            $data = json_decode($content, true, $this->maxJsonDepth, \JSON_THROW_ON_ERROR);
         } catch (\JsonException $ex) {
             throw new BadRequestHttpException('The request body seems to contain invalid json!', $ex);
         }
