@@ -1,7 +1,7 @@
 {
     "name": "fusonic/http-kernel-extensions",
     "license": "MIT",
-    "version": "5.3.2",
+    "version": "5.3.3",
     "description": "Symfony HttpKernel Component Extensions.",
     "type": "library",
     "authors": [
@@ -38,7 +38,8 @@
         "symfony/cache": "^5.4|^6.0",
         "phpstan/phpstan-strict-rules": "^1.1",
         "phpstan/phpstan-symfony": "^1.1",
-        "symplify/phpstan-rules": "^11.1"
+        "symplify/phpstan-rules": "^11.1",
+        "tomasvotruba/type-coverage": "^0.0.9"
     },
     "scripts": {
         "phpstan": "XDEBUG_MODE=off php -d memory_limit=2048M vendor/bin/phpstan analyse",
