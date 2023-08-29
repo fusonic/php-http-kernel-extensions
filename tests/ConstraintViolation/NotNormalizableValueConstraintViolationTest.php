@@ -13,6 +13,7 @@ use Fusonic\HttpKernelExtensions\Normalizer\ConstraintViolationExceptionNormaliz
 use Fusonic\HttpKernelExtensions\Tests\Dto\ArrayDto;
 use Fusonic\HttpKernelExtensions\Tests\Dto\DummyClassB;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
 use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
@@ -47,26 +48,19 @@ class NotNormalizableValueConstraintViolationTest extends TestCase
         $normalizer = new ConstraintViolationExceptionNormalizer(new ConstraintViolationListNormalizer());
         $result = $normalizer->normalize(ConstraintViolationException::fromConstraintViolation($constraintViolation));
 
-        self::assertSame(
-            [
-                'type' => 'https://symfony.com/errors/validation',
-                'title' => 'Validation Failed',
-                'detail' => 'someProperty: This value should be of type int.',
-                'violations' => [
-                        [
-                            'propertyPath' => 'someProperty',
-                            'title' => 'This value should be of type int.',
-                            'parameters' => [
-                                '{{ type }}' => 'int',
-                            ],
-                            'type' => 'urn:uuid:ba785a8c-82cb-4283-967c-3cf342181b40',
-                            'messageTemplate' => 'This value should be of type {{ type }}.',
-                            'errorName' => 'INVALID_TYPE_ERROR',
-                        ],
-                    ],
-            ],
-            $result
-        );
+        self::assertSame('https://symfony.com/errors/validation', $result['type']);
+        self::assertSame('Validation Failed', $result['title']);
+        self::assertSame('someProperty: This value should be of type int.', $result['detail']);
+        self::assertSame('someProperty', $result['violations'][0]['propertyPath']);
+        self::assertSame('This value should be of type int.', $result['violations'][0]['title']);
+        self::assertSame(['{{ type }}' => 'int'], $result['violations'][0]['parameters']);
+        self::assertSame('urn:uuid:ba785a8c-82cb-4283-967c-3cf342181b40', $result['violations'][0]['type']);
+        self::assertSame('This value should be of type {{ type }}.', $result['violations'][0]['messageTemplate']);
+        self::assertSame('INVALID_TYPE_ERROR', $result['violations'][0]['errorName']);
+
+        if (Kernel::VERSION_ID >= 60300) {
+            self::assertSame('This value should be of type {{ type }}.', $result['violations'][0]['template']);
+        }
     }
 
     public function testMissingArray(): void
@@ -96,25 +90,18 @@ class NotNormalizableValueConstraintViolationTest extends TestCase
         $normalizer = new ConstraintViolationExceptionNormalizer(new ConstraintViolationListNormalizer());
         $result = $normalizer->normalize(ConstraintViolationException::fromConstraintViolation($constraintViolation));
 
-        self::assertSame(
-            [
-                'type' => 'https://symfony.com/errors/validation',
-                'title' => 'Validation Failed',
-                'detail' => 'items: This value should be of type Fusonic\HttpKernelExtensions\Tests\Dto\DummyClassA[].',
-                'violations' => [
-                    [
-                        'propertyPath' => 'items',
-                        'title' => 'This value should be of type Fusonic\HttpKernelExtensions\Tests\Dto\DummyClassA[].',
-                        'parameters' => [
-                            '{{ type }}' => 'Fusonic\HttpKernelExtensions\Tests\Dto\DummyClassA[]',
-                        ],
-                        'type' => 'urn:uuid:ba785a8c-82cb-4283-967c-3cf342181b40',
-                        'messageTemplate' => 'This value should be of type {{ type }}.',
-                        'errorName' => 'INVALID_TYPE_ERROR',
-                    ],
-                ],
-            ],
-            $result
-        );
+        self::assertSame('https://symfony.com/errors/validation', $result['type']);
+        self::assertSame('Validation Failed', $result['title']);
+        self::assertSame('items: This value should be of type Fusonic\HttpKernelExtensions\Tests\Dto\DummyClassA[].', $result['detail']);
+        self::assertSame('items', $result['violations'][0]['propertyPath']);
+        self::assertSame('This value should be of type Fusonic\HttpKernelExtensions\Tests\Dto\DummyClassA[].', $result['violations'][0]['title']);
+        self::assertSame(['{{ type }}' => 'Fusonic\HttpKernelExtensions\Tests\Dto\DummyClassA[]'], $result['violations'][0]['parameters']);
+        self::assertSame('urn:uuid:ba785a8c-82cb-4283-967c-3cf342181b40', $result['violations'][0]['type']);
+        self::assertSame('This value should be of type {{ type }}.', $result['violations'][0]['messageTemplate']);
+        self::assertSame('INVALID_TYPE_ERROR', $result['violations'][0]['errorName']);
+
+        if (Kernel::VERSION_ID >= 60300) {
+            self::assertSame('This value should be of type {{ type }}.', $result['violations'][0]['template']);
+        }
     }
 }

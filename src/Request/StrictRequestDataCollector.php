@@ -41,9 +41,6 @@ class StrictRequestDataCollector implements RequestDataCollectorInterface
         ];
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function collect(Request $request): array
     {
         $routeParameters = $this->getRouteParams($request);
@@ -89,7 +86,15 @@ class StrictRequestDataCollector implements RequestDataCollectorInterface
      */
     protected function parseRequestBody(Request $request): array
     {
-        $requestBodyParser = $this->requestBodyParsers[$request->getContentType()] ?? null;
+        // Don't use deprecated method if symfony/http-foundation >= 6.3 is installed
+        // @phpstan-ignore-next-line
+        if (method_exists($request, 'getContentTypeFormat')) {
+            $contentTypeFormat = $request->getContentTypeFormat();
+        } else {
+            $contentTypeFormat = $request->getContentType();
+        }
+
+        $requestBodyParser = $this->requestBodyParsers[$contentTypeFormat] ?? null;
 
         if (null === $requestBodyParser) {
             $requestBodyParser = $this->requestBodyParsers['default'];

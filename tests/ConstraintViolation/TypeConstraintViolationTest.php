@@ -12,6 +12,7 @@ use Fusonic\HttpKernelExtensions\Exception\ConstraintViolationException;
 use Fusonic\HttpKernelExtensions\Normalizer\ConstraintViolationExceptionNormalizer;
 use Fusonic\HttpKernelExtensions\Tests\Dto\DummyClassA;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Serializer\Normalizer\ConstraintViolationListNormalizer;
 
 class TypeConstraintViolationTest extends TestCase
@@ -36,25 +37,18 @@ class TypeConstraintViolationTest extends TestCase
         $normalizer = new ConstraintViolationExceptionNormalizer(new ConstraintViolationListNormalizer());
         $result = $normalizer->normalize(ConstraintViolationException::fromConstraintViolation($constraintViolation));
 
-        self::assertSame(
-            [
-                'type' => 'https://symfony.com/errors/validation',
-                'title' => 'Validation Failed',
-                'detail' => 'requiredArgument: This value should be of type int.',
-                'violations' => [
-                        [
-                            'propertyPath' => 'requiredArgument',
-                            'title' => 'This value should be of type int.',
-                            'parameters' => [
-                                '{{ type }}' => 'int',
-                            ],
-                            'type' => 'urn:uuid:ba785a8c-82cb-4283-967c-3cf342181b40',
-                            'messageTemplate' => 'This value should be of type {{ type }}.',
-                            'errorName' => 'INVALID_TYPE_ERROR',
-                        ],
-                    ],
-            ],
-            $result
-        );
+        self::assertSame('https://symfony.com/errors/validation', $result['type']);
+        self::assertSame('Validation Failed', $result['title']);
+        self::assertSame('requiredArgument: This value should be of type int.', $result['detail']);
+        self::assertSame('requiredArgument', $result['violations'][0]['propertyPath']);
+        self::assertSame('This value should be of type int.', $result['violations'][0]['title']);
+        self::assertSame(['{{ type }}' => 'int'], $result['violations'][0]['parameters']);
+        self::assertSame('urn:uuid:ba785a8c-82cb-4283-967c-3cf342181b40', $result['violations'][0]['type']);
+        self::assertSame('This value should be of type {{ type }}.', $result['violations'][0]['messageTemplate']);
+        self::assertSame('INVALID_TYPE_ERROR', $result['violations'][0]['errorName']);
+
+        if (Kernel::VERSION_ID >= 60300) {
+            self::assertSame('This value should be of type {{ type }}.', $result['violations'][0]['template']);
+        }
     }
 }

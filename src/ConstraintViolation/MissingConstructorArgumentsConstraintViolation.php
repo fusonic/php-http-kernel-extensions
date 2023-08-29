@@ -27,7 +27,7 @@ class MissingConstructorArgumentsConstraintViolation extends ConstraintViolation
         }
 
         $matches = null;
-        $pattern = '/Cannot create an instance of "(.+)" from serialized data because its constructor requires parameter "(.+)" to be present\./';
+        $pattern = '/Cannot create an instance of "(.+)" from serialized data because its constructor requires(?: the following parameters to be present :| parameter)? "(.+)"(?: to be present)?\./';
 
         preg_match($pattern, $message, $matches);
 

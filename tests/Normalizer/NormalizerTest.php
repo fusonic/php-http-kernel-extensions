@@ -10,6 +10,7 @@ namespace Fusonic\HttpKernelExtensions\Tests\Normalizer;
 use Fusonic\HttpKernelExtensions\Exception\ConstraintViolationException;
 use Fusonic\HttpKernelExtensions\Normalizer\ConstraintViolationExceptionNormalizer;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Serializer\Normalizer\ConstraintViolationListNormalizer;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -34,26 +35,32 @@ class NormalizerTest extends TestCase
         $result = $normalizer->normalize($exception);
 
         self::assertSame('ConstraintViolation: This value is too short. It should have 10 characters or more.', $exception->getMessage());
+
+        self::assertSame('https://symfony.com/errors/validation', $result['type']);
+        self::assertSame('Validation Failed', $result['title']);
+        self::assertSame('This value is too short. It should have 10 characters or more.', $result['detail']);
+        self::assertSame('', $result['violations'][0]['propertyPath']);
         self::assertSame(
-            [
-                'type' => 'https://symfony.com/errors/validation',
-                'title' => 'Validation Failed',
-                'detail' => 'This value is too short. It should have 10 characters or more.',
-                'violations' => [
-                        [
-                            'propertyPath' => '',
-                            'title' => 'This value is too short. It should have 10 characters or more.',
-                            'parameters' => [
-                                '{{ value }}' => '"Bernhard"',
-                                '{{ limit }}' => '10',
-                            ],
-                            'type' => 'urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45',
-                            'messageTemplate' => 'This value is too short. It should have {{ limit }} character or more.|This value is too short. It should have {{ limit }} characters or more.',
-                            'errorName' => 'TOO_SHORT_ERROR',
-                        ],
-                    ],
-            ],
-            $result
+            expected: 'This value is too short. It should have 10 characters or more.',
+            actual: $result['violations'][0]['title']
         );
+        self::assertSame('"Bernhard"', $result['violations'][0]['parameters']['{{ value }}']);
+        self::assertSame('10', $result['violations'][0]['parameters']['{{ limit }}']);
+        self::assertSame('urn:uuid:9ff3fdc4-b214-49db-8718-39c315e33d45', $result['violations'][0]['type']);
+        self::assertSame(
+            expected: 'This value is too short. It should have {{ limit }} character or more.|This value is too short. It should have {{ limit }} characters or more.',
+            actual: $result['violations'][0]['messageTemplate']
+        );
+        self::assertSame('TOO_SHORT_ERROR', $result['violations'][0]['errorName']);
+
+        if (Kernel::VERSION_ID >= 60300) {
+            self::assertSame(
+                expected: 'This value is too short. It should have {{ limit }} character or more.|This value is too short. It should have {{ limit }} characters or more.',
+                actual: $result['violations'][0]['template']);
+        }
+
+        if (Kernel::VERSION_ID >= 60300) {
+            self::assertSame('8', $result['violations'][0]['parameters']['{{ value_length }}']);
+        }
     }
 }

@@ -25,9 +25,9 @@ final class ConstraintViolationExceptionNormalizer implements NormalizerInterfac
     }
 
     /**
-     * {@inheritDoc}
+     * @param array<mixed> $context
      */
-    public function normalize(mixed $object, string $format = null, array $context = []): array
+    public function normalize(mixed $object, ?string $format = null, array $context = []): array
     {
         /** @var ConstraintViolationException $exception */
         $exception = $object;
@@ -63,14 +63,27 @@ final class ConstraintViolationExceptionNormalizer implements NormalizerInterfac
         return $normalized;
     }
 
-    public function supportsNormalization(mixed $data, string $format = null): bool
+    /**
+     * @param array<mixed> $context
+     */
+    public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
     {
-        return $data instanceof ConstraintViolationException &&
-            $this->normalizer->supportsNormalization($data->getConstraintViolationList(), $format);
+        return $data instanceof ConstraintViolationException
+            && $this->normalizer->supportsNormalization($data->getConstraintViolationList(), $format);
     }
 
     public function hasCacheableSupportsMethod(): bool
     {
         return true;
+    }
+
+    /**
+     * @return array<class-string, bool>
+     */
+    public function getSupportedTypes(?string $format): array
+    {
+        return [
+            ConstraintViolationException::class => true,
+        ];
     }
 }
