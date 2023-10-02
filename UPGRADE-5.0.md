@@ -1,7 +1,7 @@
 # Upgrade 4.x to 5.0
 
 ## Changes
-The signate of the `Fusonic\HttpKernelExtensions\ErrorHandler\ErrorHandlerInterface` has changed:
+The signature of the `Fusonic\HttpKernelExtensions\ErrorHandler\ErrorHandlerInterface` has changed:
 
 Before:
 ```

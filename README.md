@@ -3,11 +3,23 @@
 [![License](https://img.shields.io/packagist/l/fusonic/http-kernel-extensions?color=blue)](https://github.com/fusonic/php-http-kernel-extensions/blob/master/LICENSE)
 [![Latest Version](https://img.shields.io/github/tag/fusonic/php-http-kernel-extensions.svg?color=blue)](https://github.com/fusonic/php-http-kernel-extensions/releases)
 [![Total Downloads](https://img.shields.io/packagist/dt/fusonic/http-kernel-extensions.svg?color=blue)](https://packagist.org/packages/fusonic/http-kernel-extensions)
-![php 7.4+](https://img.shields.io/badge/php-min%207.4-blue.svg)
+![php 8.1+](https://img.shields.io/badge/php-min%208.1-blue.svg)
 
 * [About](#about)
 * [Install](#install)
 * [Usage](#usage)
+
+## ⚠️ Discontinuation notice ⚠️
+
+> [!WARNING]
+> The `fusonic/http-kernel-extensions` package has been discontinued in favour of a dedicated Symfony bundle located at
+> `fusonic/http-kernel-bundle` (see [fusonic/php-http-kernel-bundle](https://github.com/fusonic/php-http-kernel-bundle)).
+> 
+> This package is only compatible up to and including Symfony 6.3 and will not receive any further feature updates.
+> Please consider switching to the new bundle to benefit from future changes.
+> 
+> Please refer to [UPGRADE-1.0.md](https://github.com/fusonic/php-http-kernel-bundle/tree/master/UPGRADE-1.0.md)
+> for guidance on how to upgrade to the new bundle.
 
 ## About
 
